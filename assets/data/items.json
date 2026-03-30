@@ -1,0 +1,12 @@
+[
+  { "id": 1, "name": "Minecraft", "year": 2011, "difficulty": 1, "category": "game" },
+  { "id": 2, "name": "Fortnite", "year": 2017, "difficulty": 1, "category": "game" },
+  { "id": 3, "name": "The Witcher 3", "year": 2015, "difficulty": 2, "category": "game" },
+  { "id": 4, "name": "Cyberpunk 2077", "year": 2020, "difficulty": 2, "category": "game" },
+  { "id": 5, "name": "Elden Ring", "year": 2022, "difficulty": 2, "category": "game" },
+  { "id": 6, "name": "The Dark Knight", "year": 2008, "difficulty": 1, "category": "movie" },
+  { "id": 7, "name": "Inception", "year": 2010, "difficulty": 1, "category": "movie" },
+  { "id": 8, "name": "Interstellar", "year": 2014, "difficulty": 2, "category": "movie" },
+  { "id": 9, "name": "Parasite", "year": 2019, "difficulty": 2, "category": "movie" },
+  { "id": 10, "name": "Hereditary", "year": 2018, "difficulty": 3, "category": "movie" }
+]
