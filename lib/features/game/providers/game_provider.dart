@@ -124,6 +124,8 @@ class GameNotifier extends StateNotifier<GameState> {
     if (correct) {
       final score = _calculateScore();
       state = state.copyWith(isFinished: true, score: score);
+    } else {
+      state = state.copyWith(isFinished: true, isLost: true, score: 0);
     }
   }
 

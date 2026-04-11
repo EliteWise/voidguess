@@ -10,7 +10,7 @@ class ResultsScreen extends StatefulWidget {
   final String itemName;
   final bool usedHint;
   final String category;
-
+  final bool isLost;
 
   const ResultsScreen({
     super.key,
@@ -19,6 +19,7 @@ class ResultsScreen extends StatefulWidget {
     required this.itemName,
     required this.usedHint,
     required this.category,
+    required this.isLost
   });
 
   @override
@@ -44,22 +45,22 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void _share() {
     final hint = widget.usedHint ? ' (avec indice)' : '';
     Share.share(
-      'VoidGuessr — j\'ai deviné "${widget.itemName}" en ${widget.timeSeconds}s$hint avec un score de ${widget.score} pts ! Peux-tu faire mieux ?',
+      'VoidGuess — j\'ai deviné "${widget.itemName}" en ${widget.timeSeconds}s$hint avec un score de ${widget.score} pts ! Peux-tu faire mieux ?',
     );
   }
 
   String get _scoreLabel {
+    if (widget.isLost) return 'Perdu !';
     if (widget.score >= 800) return 'Excellent !';
-    if (widget.score >= 500) return 'Bien joué !';
-    if (widget.score >= 200) return 'Pas mal...';
-    return 'Raté !';
+    if (widget.score >= 400) return 'Bien joué !';
+    return 'Pas mal...';
   }
 
   Color get _scoreColor {
+    if (widget.isLost) return AppTheme.wrong;
     if (widget.score >= 800) return AppTheme.correct;
-    if (widget.score >= 500) return AppTheme.primary;
-    if (widget.score >= 200) return AppTheme.hint;
-    return AppTheme.wrong;
+    if (widget.score >= 400) return AppTheme.primary;
+    return AppTheme.hint;
   }
 
   @override

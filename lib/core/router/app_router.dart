@@ -22,13 +22,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/results',
       builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>;
+        final extra = state.extra as Map<String, dynamic>? ?? {};
         return ResultsScreen(
-          score: extra['score'] as int,
-          timeSeconds: extra['timeSeconds'] as int,
-          itemName: extra['itemName'] as String,
-          usedHint: extra['usedHint'] as bool,
-          category: extra['category'] as String,
+          score: extra['score'] as int ?? 0,
+          timeSeconds: extra['timeSeconds'] as int? ?? 0,
+          itemName: extra['itemName'] as String? ?? '',
+          usedHint: extra['usedHint'] as bool? ?? false,
+          category: extra['category'] as String? ?? 'game',
+          isLost: extra['isLost'] as bool? ?? false,
         );
       },
     ),

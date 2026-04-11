@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const Text(
-                'GUESSR',
+                'GUESS',
                 style: TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 32,

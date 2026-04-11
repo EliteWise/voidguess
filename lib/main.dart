@@ -24,6 +24,17 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       routerConfig: appRouter,
+      builder: (context, child) {
+        return Container(
+          color: AppTheme.background,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: child!,
+            ),
+          ),
+        );
+      },
     );
   }
 }

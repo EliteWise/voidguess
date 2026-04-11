@@ -82,6 +82,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         'itemName': state.currentItem!.name,
         'usedHint': state.usedHint,
         'category': widget.category,
+        'isLost': state.isLost,
       });
     }
   }
