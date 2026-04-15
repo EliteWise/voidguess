@@ -1,7 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../data/models/item.dart';
-import '../../../data/repositories/game_repository.dart';
+import '../../../data/repositories/item_repository.dart'; // ← correct
+
+enum RunMode { quickNormal, quickHardcore, fullNormal, fullHardcore }
+
+extension RunModeExtension on RunMode {
+  int get totalItems => name.startsWith('quick') ? 5 : 10;
+  bool get isHardcore => name.endsWith('Hardcore');
+  String get label {
+    switch (this) {
+      case RunMode.quickNormal: return 'Quick — Normal';
+      case RunMode.quickHardcore: return 'Quick — Hardcore';
+      case RunMode.fullNormal: return 'Full — Normal';
+      case RunMode.fullHardcore: return 'Full — Hardcore';
+    }
+  }
+}
 
 final itemRepositoryProvider = Provider<ItemRepository>((ref) {
   return ItemRepository();
@@ -12,46 +27,90 @@ final gameProvider = StateNotifierProvider<GameNotifier, GameState>((ref) {
   return GameNotifier(repository);
 });
 
+class ItemResult {
+  final String name;
+  final int score;
+  final int timeSeconds;
+  final bool found;
+
+  const ItemResult({
+    required this.name,
+    required this.score,
+    required this.timeSeconds,
+    required this.found,
+  });
+}
+
 class GameState {
   final Item? currentItem;
   final List<String> revealedLetters;
   final bool isFinished;
+  final bool isLost;
   final bool usedHint;
   final int timeSeconds;
   final int score;
   final bool isLoading;
-  final bool isLost;
+
+  // Run
+  final RunMode runMode;
+  final String category;
+  final int currentItemIndex;
+  final List<ItemResult> itemResults;
+  final bool isRunFinished;
+  final bool showingItemRecap;
 
   const GameState({
     this.currentItem,
     this.revealedLetters = const [],
     this.isFinished = false,
+    this.isLost = false,
     this.usedHint = false,
     this.timeSeconds = 0,
     this.score = 0,
     this.isLoading = true,
-    this.isLost = false,
+    this.runMode = RunMode.quickNormal,
+    this.category = 'game',
+    this.currentItemIndex = 0,
+    this.itemResults = const [],
+    this.isRunFinished = false,
+    this.showingItemRecap = false,
   });
+
+  int get totalItems => runMode.totalItems;
+  int get totalScore => itemResults.fold(0, (sum, r) => sum + r.score);
+  int get itemsFound => itemResults.where((r) => r.found).length;
 
   GameState copyWith({
     Item? currentItem,
     List<String>? revealedLetters,
     bool? isFinished,
+    bool? isLost,
     bool? usedHint,
     int? timeSeconds,
     int? score,
     bool? isLoading,
-    bool? isLost,
+    RunMode? runMode,
+    String? category,
+    int? currentItemIndex,
+    List<ItemResult>? itemResults,
+    bool? isRunFinished,
+    bool? showingItemRecap,
   }) {
     return GameState(
       currentItem: currentItem ?? this.currentItem,
       revealedLetters: revealedLetters ?? this.revealedLetters,
       isFinished: isFinished ?? this.isFinished,
+      isLost: isLost ?? this.isLost,
       usedHint: usedHint ?? this.usedHint,
       timeSeconds: timeSeconds ?? this.timeSeconds,
       score: score ?? this.score,
       isLoading: isLoading ?? this.isLoading,
-      isLost: isLost ?? this.isLost,
+      runMode: runMode ?? this.runMode,
+      category: category ?? this.category,
+      currentItemIndex: currentItemIndex ?? this.currentItemIndex,
+      itemResults: itemResults ?? this.itemResults,
+      isRunFinished: isRunFinished ?? this.isRunFinished,
+      showingItemRecap: showingItemRecap ?? this.showingItemRecap,
     );
   }
 }
@@ -61,9 +120,24 @@ class GameNotifier extends StateNotifier<GameState> {
 
   GameNotifier(this._repository) : super(const GameState());
 
-  Future<void> loadItem(String category) async {
+  Future<void> startRun({
+    required RunMode mode,
+    required String category,
+  }) async {
+    state = const GameState(isLoading: true);
+    state = state.copyWith(
+      runMode: mode,
+      category: category,
+      currentItemIndex: 0,
+      itemResults: [],
+      isRunFinished: false,
+    );
+    await _loadNextItem();
+  }
+
+  Future<void> _loadNextItem() async {
     state = state.copyWith(isLoading: true);
-    final item = await _repository.getRandomItem(category: category);
+    final item = await _repository.getRandomItem(category: state.category);
     final letters = _buildInitialLetters(item.name);
     state = state.copyWith(
       currentItem: item,
@@ -74,10 +148,10 @@ class GameNotifier extends StateNotifier<GameState> {
       usedHint: false,
       score: 0,
       timeSeconds: 0,
+      showingItemRecap: false,
     );
   }
 
-  // Construit la liste : lettre visible ou '_'
   List<String> _buildInitialLetters(String name) {
     return name.split('').map((char) {
       if (char == ' ') return ' ';
@@ -85,7 +159,6 @@ class GameNotifier extends StateNotifier<GameState> {
     }).toList();
   }
 
-  // Révèle une lettre aléatoire non encore révélée
   void revealNextLetter() {
     if (state.currentItem == null) return;
     final name = state.currentItem!.name;
@@ -102,10 +175,9 @@ class GameNotifier extends StateNotifier<GameState> {
     letters[index] = name[index];
     state = state.copyWith(revealedLetters: letters);
 
-    // Si plus aucune lettre cachée → perdu
     final remaining = letters.where((l) => l == '_').length;
     if (remaining == 0) {
-      state = state.copyWith(isLost: true, isFinished: true);
+      _handleItemEnd(found: false);
     }
   }
 
@@ -122,11 +194,45 @@ class GameNotifier extends StateNotifier<GameState> {
     final correct = guess.trim().toLowerCase() ==
         state.currentItem!.name.trim().toLowerCase();
     if (correct) {
-      final score = _calculateScore();
-      state = state.copyWith(isFinished: true, score: score);
+      _handleItemEnd(found: true);
     } else {
-      state = state.copyWith(isFinished: true, isLost: true, score: 0);
+      if (state.runMode.isHardcore) {
+        _handleItemEnd(found: false, forceRunEnd: true);
+      } else {
+        _handleItemEnd(found: false);
+      }
     }
+  }
+
+  void _handleItemEnd({required bool found, bool forceRunEnd = false}) {
+    final score = found ? _calculateScore() : 0;
+    final result = ItemResult(
+      name: state.currentItem!.name,
+      score: score,
+      timeSeconds: state.timeSeconds,
+      found: found,
+    );
+
+    final newResults = [...state.itemResults, result];
+    final isLastItem = state.currentItemIndex >= state.totalItems - 1;
+    final shouldEndRun = forceRunEnd || isLastItem;
+
+    state = state.copyWith(
+      isFinished: true,
+      isLost: !found,
+      score: score,
+      itemResults: newResults,
+      showingItemRecap: true,
+      isRunFinished: shouldEndRun,
+    );
+  }
+
+  Future<void> nextItem() async {
+    if (state.isRunFinished) return;
+    state = state.copyWith(
+      currentItemIndex: state.currentItemIndex + 1,
+    );
+    await _loadNextItem();
   }
 
   int _calculateScore() {

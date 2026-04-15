@@ -1,0 +1,23 @@
+[
+  { "id": "speed_demon", "title": "Speed Demon", "description": "Guess in under 3 seconds", "category": "speed" },
+  { "id": "flash", "title": "Flash", "description": "Guess in under 5 seconds", "category": "speed" },
+  { "id": "no_time_to_think", "title": "No Time to Think", "description": "Finish a run with average time under 8s", "category": "speed" },
+  { "id": "first_letter", "title": "First Letter", "description": "Guess with only 1 letter revealed", "category": "precision" },
+  { "id": "second_letter", "title": "Second Letter", "description": "Guess with only 2 letters revealed", "category": "precision" },
+  { "id": "no_hint", "title": "No Hint", "description": "Finish a run without using any hint", "category": "precision" },
+  { "id": "blindfolded", "title": "Blindfolded", "description": "Finish a Full Run without hint and without mistake", "category": "precision" },
+  { "id": "first_run", "title": "First Run", "description": "Complete your first run", "category": "runs" },
+  { "id": "perfect_run", "title": "Perfect Run", "description": "Find all items in a Full Run", "category": "runs" },
+  { "id": "hardcore_survivor", "title": "Hardcore Survivor", "description": "Complete a Hardcore Run", "category": "runs" },
+  { "id": "veteran", "title": "Veteran", "description": "Complete 10 runs", "category": "runs" },
+  { "id": "legend", "title": "Legend", "description": "Complete 50 runs", "category": "runs" },
+  { "id": "void_walker", "title": "Void Walker", "description": "Complete 100 runs", "category": "runs" },
+  { "id": "high_scorer", "title": "High Scorer", "description": "Score over 800 pts on a single item", "category": "score" },
+  { "id": "perfect_score", "title": "Perfect Score", "description": "Score 1000 pts on a single item", "category": "score" },
+  { "id": "grand_total", "title": "Grand Total", "description": "Reach 5000 pts in a single run", "category": "score" },
+  { "id": "gamer", "title": "Gamer", "description": "Complete 5 runs in Games category", "category": "categories" },
+  { "id": "cinephile", "title": "Cinephile", "description": "Complete 5 runs in Movies category", "category": "categories" },
+  { "id": "cultured", "title": "Cultured", "description": "Complete at least 1 run in each category", "category": "categories" },
+  { "id": "void_master", "title": "Void Master", "description": "Complete 10 Hardcore Runs", "category": "secret" },
+  { "id": "the_one", "title": "The One", "description": "Score 1000 pts on 5 consecutive items", "category": "secret" }
+]

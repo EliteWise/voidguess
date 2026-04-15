@@ -1,9 +1,9 @@
 import 'package:go_router/go_router.dart';
-import 'package:flutter/material.dart';
+import '../../features/achievements/screens/stats_screen.dart';
+import '../../features/game/providers/game_provider.dart';
 import '../../screens/home_screen.dart';
 import '../../features/game/screens/game_screen.dart';
 import '../../features/results/screens/results_screen.dart';
-import '../../features/achievements/screens/achievements_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -15,27 +15,31 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/game',
       builder: (context, state) {
-        final category = state.uri.queryParameters['category'] ?? 'game';
-        return GameScreen(category: category);
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final mode = extra['mode'] as RunMode? ?? RunMode.quickNormal;
+        final category = extra['category'] as String? ?? 'game';
+        return GameScreen(mode: mode, category: category);
       },
     ),
     GoRoute(
       path: '/results',
       builder: (context, state) {
         final extra = state.extra as Map<String, dynamic>? ?? {};
+        final rawResults = extra['itemResults'] as List<ItemResult>? ?? [];
         return ResultsScreen(
-          score: extra['score'] as int ?? 0,
-          timeSeconds: extra['timeSeconds'] as int? ?? 0,
-          itemName: extra['itemName'] as String? ?? '',
-          usedHint: extra['usedHint'] as bool? ?? false,
+          itemResults: rawResults,
+          totalScore: extra['totalScore'] as int? ?? 0,
+          itemsFound: extra['itemsFound'] as int? ?? 0,
+          totalItems: extra['totalItems'] as int? ?? 0,
+          mode: extra['mode'] as RunMode? ?? RunMode.quickNormal,
           category: extra['category'] as String? ?? 'game',
-          isLost: extra['isLost'] as bool? ?? false,
+          isHardcoreFail: extra['isHardcoreFail'] as bool? ?? false,
         );
       },
     ),
     GoRoute(
-      path: '/achievements',
-      builder: (context, state) => const AchievementsScreen(),
+      path: '/stats',
+      builder: (context, state) => const StatsScreen(),
     ),
   ],
 );

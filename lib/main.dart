@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voidguess/core/widgets/floating_letters.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'data/services/hive_service.dart';
@@ -27,11 +28,16 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return Container(
           color: AppTheme.background,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: child!,
-            ),
+          child: Stack(
+            children: [
+              const FloatingLetters(),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: child!,
+                ),
+              )
+            ],
           ),
         );
       },
