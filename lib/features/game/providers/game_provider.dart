@@ -32,12 +32,16 @@ class ItemResult {
   final int score;
   final int timeSeconds;
   final bool found;
+  final int lettersRevealed;
+  final bool usedHint;
 
   const ItemResult({
     required this.name,
     required this.score,
     required this.timeSeconds,
     required this.found,
+    required this.lettersRevealed,
+    required this.usedHint
   });
 }
 
@@ -206,11 +210,17 @@ class GameNotifier extends StateNotifier<GameState> {
 
   void _handleItemEnd({required bool found, bool forceRunEnd = false}) {
     final score = found ? _calculateScore() : 0;
+    final lettersRevealed = state.revealedLetters
+        .where((l) => l != '_' && l != ' ')
+        .length;
+
     final result = ItemResult(
       name: state.currentItem!.name,
       score: score,
       timeSeconds: state.timeSeconds,
       found: found,
+      lettersRevealed: lettersRevealed,
+      usedHint: state.usedHint,
     );
 
     final newResults = [...state.itemResults, result];
@@ -236,8 +246,20 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   int _calculateScore() {
-    int score = 1000;
-    score -= state.timeSeconds * 50;
+    final totalLetters = state.currentItem!.name
+        .split('')
+        .where((c) => c != ' ')
+        .length;
+
+    final revealedLetters = state.revealedLetters
+        .where((l) => l != '_' && l != ' ')
+        .length;
+
+    final hiddenAtGuess = totalLetters - revealedLetters;
+
+    double ratio = hiddenAtGuess / totalLetters;
+    int score = (1000 * ratio).round();
+
     if (state.usedHint) score = (score / 2).round();
     return score.clamp(0, 1000);
   }

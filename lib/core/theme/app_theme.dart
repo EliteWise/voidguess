@@ -1,14 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF6C63FF);
-  static const Color background = Color(0xFF0F0F0F);
+  // Couleurs core
+  static const Color background = Color(0xFF080808);
   static const Color surface = Color(0xFF1A1A1A);
-  static const Color correct = Color(0xFF4CAF50);
-  static const Color wrong = Color(0xFFE53935);
-  static const Color hint = Color(0xFFFFC107);
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF9E9E9E);
+  static const Color surfaceHigh = Color(0xFF1C1C1C);
+
+  // Accent — blanc void
+  static const Color primary = Color(0xFFE8E8F0);
+  static const Color primaryDeep = Color(0xFF4040FF);
+  static const Color primaryDim = Color(0xFF2A2A3A);
+
+  // Feedback
+  static const Color correct = Color(0xFF00E676);
+  static const Color wrong = Color(0xFFFF1744);
+  static const Color hint = Color(0xFFFFAB00);
+
+  // Texte
+  static const Color textPrimary = Color(0xFFE8E8F0);
+  static const Color textSecondary = Color(0xFF8888AA);
+  static const Color textTertiary = Color(0xFF444458);
+
+  static TextTheme get _textTheme => GoogleFonts.dmMonoTextTheme().copyWith(
+    headlineLarge: GoogleFonts.dmMono(
+      color: textPrimary,
+      fontSize: 32,
+      fontWeight: FontWeight.w500,
+      letterSpacing: -1,
+    ),
+    headlineMedium: GoogleFonts.dmMono(
+      color: textPrimary,
+      fontSize: 24,
+      fontWeight: FontWeight.w500,
+      letterSpacing: -0.5,
+    ),
+    bodyLarge: GoogleFonts.dmMono(
+      color: textPrimary,
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+    ),
+    bodyMedium: GoogleFonts.dmMono(
+      color: textSecondary,
+      fontSize: 14,
+    ),
+  );
 
   static ThemeData get dark => ThemeData(
     brightness: Brightness.dark,
@@ -19,36 +55,52 @@ class AppTheme {
       surface: surface,
       error: wrong,
     ),
-    textTheme: const TextTheme(
-      headlineLarge: TextStyle(
-        color: textPrimary,
-        fontSize: 32,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 2,
-      ),
-      headlineMedium: TextStyle(
-        color: textPrimary,
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-      ),
-      bodyLarge: TextStyle(
-        color: textPrimary,
-        fontSize: 16,
-      ),
-      bodyMedium: TextStyle(
-        color: textSecondary,
-        fontSize: 14,
-      ),
-    ),
+    textTheme: _textTheme,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
-        foregroundColor: textPrimary,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        foregroundColor: background,
+        textStyle: GoogleFonts.dmMono(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 1,
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(2),
+            topRight: Radius.circular(14),
+            bottomLeft: Radius.circular(14),
+            bottomRight: Radius.circular(2),
+          ),
+        ),
+        elevation: 0,
       ),
     ),
   );
+
+  // Border radius asymétriques
+  static const BorderRadius cardRadius = BorderRadius.only(
+    topLeft: Radius.circular(2),
+    topRight: Radius.circular(16),
+    bottomLeft: Radius.circular(16),
+    bottomRight: Radius.circular(2),
+  );
+
+  static const BorderRadius chipRadius = BorderRadius.only(
+    topLeft: Radius.circular(0),
+    topRight: Radius.circular(10),
+    bottomLeft: Radius.circular(10),
+    bottomRight: Radius.circular(0),
+  );
+
+  static const BorderRadius inputRadius = BorderRadius.all(
+    Radius.circular(4),
+  );
+
+  static const BorderRadius neutralRadius = BorderRadius.all(
+    Radius.circular(6),
+  );
+
+  static const BorderRadius squareRadius = BorderRadius.zero;
 }

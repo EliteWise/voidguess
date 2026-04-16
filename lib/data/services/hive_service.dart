@@ -21,6 +21,7 @@ class HiveService {
     required int avgTimeSeconds,
     required String mode,
     required String category,
+    required List<Map> itemResults,
   }) async {
     final box = Hive.box(_statsBox);
     final runs = List<Map>.from(box.get('runs', defaultValue: []));
@@ -31,6 +32,7 @@ class HiveService {
       'avgTime': avgTimeSeconds,
       'mode': mode,
       'category': category,
+      'itemResults': itemResults,
       'date': DateTime.now().toIso8601String(),
     });
     await box.put('runs', runs);
@@ -113,10 +115,85 @@ class HiveService {
     required int totalItems,
     required int avgTime,
     required bool usedHint,
+    required bool isHardcore,
+    required String category,
+    required List<Map> itemResults,
   }) async {
-    if (avgTime <= 5) await unlockAchievement('speed_5s');
-    if (totalScore >= 1000 * totalItems) await unlockAchievement('perfect_score');
-    if (itemsFound == totalItems && !usedHint) await unlockAchievement('no_hint_10');
-    if (itemsFound == totalItems) await unlockAchievement('veteran_100');
+    final runs = getRuns();
+    final totalRuns = runs.length;
+    final hardcoreRuns = runs.where((r) => (r['mode'] as String).toLowerCase().contains('hardcore')).length;
+    final gameRuns = runs.where((r) => r['category'] == 'game').length;
+    final movieRuns = runs.where((r) => r['category'] == 'movie').length;
+
+    if (totalRuns == 1) await unlockAchievement('first_run');
+    if (totalRuns >= 10) await unlockAchievement('veteran');
+    if (totalRuns >= 50) await unlockAchievement('legend');
+    if (totalRuns >= 100) await unlockAchievement('void_walker');
+
+    if (isHardcore && itemsFound == totalItems) {
+      await unlockAchievement('hardcore_survivor');
+    }
+    if (hardcoreRuns >= 10) await unlockAchievement('void_master');
+
+    if (itemsFound == totalItems && totalItems == 10) {
+      await unlockAchievement('perfect_run');
+    }
+
+    if (!usedHint && itemsFound == totalItems) {
+      await unlockAchievement('no_hint');
+    }
+    if (!usedHint && itemsFound == totalItems && totalItems == 10) {
+      await unlockAchievement('blindfolded');
+    }
+    // ─── Score global ───────────────────────────────────────
+    if (totalScore >= 5000) await unlockAchievement('grand_total');
+
+    // ─── Temps moyen ────────────────────────────────────────
+    if (avgTime <= 8) await unlockAchievement('no_time_to_think');
+
+    // ─── Catégories ─────────────────────────────────────────
+    if (gameRuns >= 5) await unlockAchievement('gamer');
+    if (movieRuns >= 5) await unlockAchievement('cinephile');
+    if (gameRuns >= 1 && movieRuns >= 1) await unlockAchievement('cultured');
+
+    // ─── Par item ───────────────────────────────────────────
+    for (final result in itemResults) {
+      final score = result['score'] as int? ?? 0;
+      final time = result['time'] as int? ?? 99;
+      final lettersRevealed = result['lettersRevealed'] as int? ?? 99;
+
+      if (time <= 3) await unlockAchievement('speed_demon');
+      if (time <= 5) await unlockAchievement('flash');
+      if (score >= 800) await unlockAchievement('high_scorer');
+      if (score >= 1000) await unlockAchievement('perfect_score');
+      if (lettersRevealed <= 1) await unlockAchievement('first_letter');
+      if (lettersRevealed <= 2) await unlockAchievement('second_letter');
+    }
+
+    // ─── The One — 5 items consécutifs à 1000 pts ───────────
+    await _checkTheOne(itemResults);
+  }
+
+  Future<void> _checkTheOne(List<Map> currentItemResults) async {
+    // Construit l'historique complet de tous les items
+    final allResults = <Map>[];
+    for (final run in getRuns()) {
+      final results = List<Map>.from(run['itemResults'] as List? ?? []);
+      allResults.addAll(results);
+    }
+    allResults.addAll(currentItemResults);
+
+    int consecutive = 0;
+    for (final result in allResults) {
+      if ((result['score'] as int? ?? 0) >= 1000) {
+        consecutive++;
+        if (consecutive >= 5) {
+          await unlockAchievement('the_one');
+          return;
+        }
+      } else {
+        consecutive = 0;
+      }
+    }
   }
 }

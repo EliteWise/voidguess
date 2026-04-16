@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/pressable.dart';
 import '../providers/game_provider.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -54,7 +56,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         if (newState.showingItemRecap) _onItemEnd();
       }
     });
-
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       final state = ref.read(gameProvider);
       if (!state.isFinished) {
@@ -130,7 +131,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (state.isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
+          child: CircularProgressIndicator(
+            color: AppTheme.primary,
+            strokeWidth: 1.5,
+          ),
         ),
       );
     }
@@ -143,7 +147,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           '${state.currentItemIndex + 1} / ${state.totalItems}',
           style: const TextStyle(
             color: AppTheme.textSecondary,
-            fontSize: 14,
+            fontSize: 13,
+            letterSpacing: 1,
           ),
         ),
         centerTitle: true,
@@ -155,8 +160,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 '${state.timeSeconds}s',
                 style: const TextStyle(
                   color: AppTheme.hint,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -169,8 +175,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               '${state.totalScore} pts',
               style: const TextStyle(
                 color: AppTheme.primary,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -185,24 +192,25 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               const Spacer(),
               if (state.runMode.isHardcore)
                 Container(
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.wrong.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppTheme.wrong.withOpacity(0.08),
+                    borderRadius: AppTheme.inputRadius,
                     border: Border.all(
-                      color: AppTheme.wrong.withOpacity(0.4),
+                      color: AppTheme.wrong.withOpacity(0.3),
+                      width: 0.5,
                     ),
                   ),
                   child: const Text(
                     'HARDCORE',
                     style: TextStyle(
                       color: AppTheme.wrong,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 3,
                     ),
                   ),
                 ),
@@ -214,29 +222,59 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 suggestions: _suggestions,
                 onSubmit: _submitGuess,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               if (!state.usedHint)
-                TextButton.icon(
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     ref.read(gameProvider.notifier).useHint();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Sorti en ${state.currentItem!.year}',
-                          style: const TextStyle(color: AppTheme.textPrimary),
+                          'Released in ${state.currentItem!.year}',
+                          style: const TextStyle(
+                            color: AppTheme.background,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         backgroundColor: AppTheme.hint,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppTheme.inputRadius,
+                        ),
                       ),
                     );
                   },
-                  icon: const Icon(
-                    Icons.lightbulb_outline,
-                    color: AppTheme.hint,
-                    size: 16,
-                  ),
-                  label: const Text(
-                    'Indice — année de sortie (÷2 score)',
-                    style: TextStyle(color: AppTheme.hint, fontSize: 13),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.hint.withOpacity(0.06),
+                      borderRadius: AppTheme.neutralRadius,
+                      border: Border.all(
+                        color: AppTheme.hint.withOpacity(0.2),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
+                          color: AppTheme.hint,
+                          size: 14,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Hint — release year  (÷2 score)',
+                          style: TextStyle(
+                            color: AppTheme.hint,
+                            fontSize: 12,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               const Spacer(),
@@ -271,18 +309,19 @@ class _ItemRecapDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppTheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: AppTheme.neutralRadius),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              found ? 'Trouvé !' : 'Raté !',
+              found ? 'Found !' : 'Missed !',
               style: TextStyle(
                 color: found ? AppTheme.correct : AppTheme.wrong,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -290,22 +329,22 @@ class _ItemRecapDialog extends StatelessWidget {
               itemName,
               style: const TextStyle(
                 color: AppTheme.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _RecapStat(
                   label: 'Score',
-                  value: '+$score pts',
+                  value: '+$score',
                   color: found ? AppTheme.correct : AppTheme.wrong,
                 ),
                 _RecapStat(
-                  label: 'Temps',
+                  label: 'Time',
                   value: '${timeSeconds}s',
                 ),
                 _RecapStat(
@@ -318,10 +357,27 @@ class _ItemRecapDialog extends StatelessWidget {
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onNext,
-                child: const Text('Suivant'),
-              ),
+              child: Pressable(
+                onTap: onNext,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: AppTheme.cardRadius,
+                  ),
+                  child: const Text(
+                    'Next',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.background,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              )
             ),
           ],
         ),
@@ -349,15 +405,18 @@ class _RecapStat extends StatelessWidget {
           value,
           style: TextStyle(
             color: color,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           label,
           style: const TextStyle(
             color: AppTheme.textSecondary,
-            fontSize: 12,
+            fontSize: 11,
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -374,30 +433,31 @@ class _LetterDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 6,
-      runSpacing: 12,
+      spacing: 8,
+      runSpacing: 16,
       children: letters.map((letter) {
-        if (letter == ' ') return const SizedBox(width: 16);
+        if (letter == ' ') return const SizedBox(width: 20);
+        final isRevealed = letter != '_';
         return Container(
-          width: 32,
-          height: 40,
+          width: 30,
+          height: 38,
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: letter == '_'
-                    ? AppTheme.textSecondary
-                    : AppTheme.primary,
-                width: 2,
+                color: isRevealed ? AppTheme.primary : AppTheme.textTertiary,
+                width: isRevealed ? 2 : 1,
               ),
             ),
           ),
           alignment: Alignment.center,
           child: Text(
-            letter == '_' ? '' : letter.toUpperCase(),
+            isRevealed ? letter.toUpperCase() : '',
             style: const TextStyle(
               color: AppTheme.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 2,
+              decoration: TextDecoration.none,
             ),
           ),
         );
@@ -432,18 +492,46 @@ class _AutocompleteInput extends StatelessWidget {
         return TextField(
           controller: controller,
           focusNode: focusNode,
-          style: const TextStyle(color: AppTheme.textPrimary),
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 15,
+            decoration: TextDecoration.none,
+          ),
           decoration: InputDecoration(
-            hintText: 'Devine le titre...',
-            hintStyle: const TextStyle(color: AppTheme.textSecondary),
+            hintText: 'Guess the title...',
+            hintStyle: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+            ),
             filled: true,
-            fillColor: AppTheme.surface,
+            fillColor: AppTheme.surfaceHigh,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderRadius: AppTheme.inputRadius,
+              borderSide: const BorderSide(
+                color: AppTheme.textTertiary,
+                width: 0.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppTheme.inputRadius,
+              borderSide: const BorderSide(
+                color: AppTheme.textTertiary,
+                width: 0.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppTheme.inputRadius,
+              borderSide: const BorderSide(
+                color: AppTheme.primary,
+                width: 1,
+              ),
             ),
             suffixIcon: IconButton(
-              icon: const Icon(Icons.send, color: AppTheme.primary),
+              icon: Icon(
+                PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+                color: AppTheme.primary,
+                size: 18,
+              ),
               onPressed: () => onSubmit(controller.text),
             ),
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/pressable.dart';
 import '../features/game/providers/game_provider.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -32,42 +34,44 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 64),
               _CategoryButton(
                 label: 'Jeux vidéo',
-                emoji: '🎮',
+                icon: PhosphorIcons.gameController(PhosphorIconsStyle.regular),
                 onTap: () => _showModeSheet(context, 'game'),
               ),
               const SizedBox(height: 12),
               _CategoryButton(
                 label: 'Films',
-                emoji: '🎬',
+                icon: PhosphorIcons.filmSlate(PhosphorIconsStyle.regular),
                 onTap: () => _showModeSheet(context, 'movie'),
               ),
               const Spacer(),
-              GestureDetector(
+              Pressable(
                 onTap: () => context.go('/stats'),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: AppTheme.neutralRadius,
                     border: Border.all(
-                      color: AppTheme.primary.withOpacity(0.15),
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
                     ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.emoji_events_outlined,
+                        PhosphorIcons.trophy(PhosphorIconsStyle.regular),
                         color: AppTheme.textSecondary,
-                        size: 18,
+                        size: 16,
                       ),
                       const SizedBox(width: 10),
                       const Text(
-                        'Stats & Succès',
+                        'Stats & Achievements',
                         style: TextStyle(
                           color: AppTheme.textSecondary,
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -96,7 +100,6 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
 
   List<String> _revealed1 = [];
   List<String> _revealed2 = [];
-  bool _contentVisible = false;
 
   @override
   void initState() {
@@ -108,32 +111,20 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
 
   Future<void> _startAnimation() async {
     await Future.delayed(const Duration(milliseconds: 300));
-
-    // Révèle VOID lettre par lettre
     for (int i = 0; i < _line1.length; i++) {
       await Future.delayed(const Duration(milliseconds: 120));
       if (!mounted) return;
       setState(() => _revealed1[i] = _line1[i]);
     }
-
     await Future.delayed(const Duration(milliseconds: 200));
-
-    // Révèle GUESS lettre par lettre
     for (int i = 0; i < _line2.length; i++) {
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return;
       setState(() => _revealed2[i] = _line2[i]);
     }
-
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    // Apparition du contenu
-    if (!mounted) return;
-    setState(() => _contentVisible = true);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTitleContent({required Color color1, required Color color2}) {
     return Column(
       children: [
         Row(
@@ -145,10 +136,11 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
               child: Text(
                 letter,
                 style: TextStyle(
-                  color: isRevealed ? AppTheme.primary : AppTheme.textSecondary.withOpacity(0.4),
+                  color: isRevealed ? color1 : AppTheme.textTertiary,
                   fontSize: 52,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 4,
+                  decoration: TextDecoration.none,
                 ),
               ),
             );
@@ -164,10 +156,11 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
               child: Text(
                 letter,
                 style: TextStyle(
-                  color: isRevealed ? AppTheme.textPrimary : AppTheme.textSecondary.withOpacity(0.4),
+                  color: isRevealed ? color2 : AppTheme.textTertiary,
                   fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 3,
+                  decoration: TextDecoration.none,
                 ),
               ),
             );
@@ -176,45 +169,94 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
       ],
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) {
+        return const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primary,
+            AppTheme.primary,
+            AppTheme.primaryDeep,
+            AppTheme.primaryDeep,
+          ],
+          stops: [0.0, 0.35, 0.70, 1.0],
+        ).createShader(bounds);
+      },
+      blendMode: BlendMode.srcIn,
+      child: _buildTitleContent(
+        color1: Colors.white,
+        color2: Colors.white,
+      ),
+    );
+  }
+}
+
+class _DiagonalClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height * 0.45);
+    path.lineTo(0, size.height * 0.65);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_DiagonalClipper oldClipper) => false;
 }
 
 class _CategoryButton extends StatelessWidget {
   final String label;
-  final String emoji;
+  final IconData icon;
   final VoidCallback onTap;
 
   const _CategoryButton({
     required this.label,
-    required this.emoji,
+    required this.icon,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment(1.0, -1.0),
+            end: Alignment(-0.5, 1.0),
+            colors: [
+              AppTheme.primaryDeep.withOpacity(0.08),
+              AppTheme.surface,
+            ],
+          ),
+          borderRadius: AppTheme.cardRadius,
           border: Border.all(
-            color: AppTheme.primary.withOpacity(0.15),
+            color: AppTheme.textTertiary,
+            width: 0.5,
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
+                color: AppTheme.primaryDim,
+                borderRadius: AppTheme.chipRadius,
               ),
               child: Center(
-                child: Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 22),
+                child: Icon(
+                  icon,
+                  color: AppTheme.primary,
+                  size: 20,
                 ),
               ),
             ),
@@ -227,8 +269,9 @@ class _CategoryButton extends StatelessWidget {
                     label,
                     style: const TextStyle(
                       color: AppTheme.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -236,16 +279,17 @@ class _CategoryButton extends StatelessWidget {
                     'Quick · Full · Hardcore',
                     style: TextStyle(
                       color: AppTheme.textSecondary,
-                      fontSize: 12,
+                      fontSize: 11,
+                      letterSpacing: 1,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: AppTheme.textSecondary,
-              size: 13,
+            Icon(
+              PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+              color: AppTheme.textTertiary,
+              size: 12,
             ),
           ],
         ),
@@ -269,32 +313,33 @@ class _ModeSheet extends StatelessWidget {
         children: [
           Center(
             child: Container(
-              width: 40,
-              height: 4,
+              width: 32,
+              height: 3,
               decoration: BoxDecoration(
-                color: AppTheme.textSecondary.withOpacity(0.3),
+                color: AppTheme.textTertiary,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           const Text(
-            'Choisis ton mode',
+            'Choose your mode',
             style: TextStyle(
               color: AppTheme.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: _ModeCard(
                   title: 'Quick',
                   subtitle: '5 guess',
-                  description: 'Session rapide\n~1 minute',
+                  description: 'Fast session\n~2 minutes',
                   isHardcore: false,
                   onTap: () {
                     Navigator.pop(context);
@@ -310,7 +355,7 @@ class _ModeSheet extends StatelessWidget {
                 child: _ModeCard(
                   title: 'Full',
                   subtitle: '10 guess',
-                  description: 'Run complet\n~3 minutes',
+                  description: 'Full run\n~4 minutes',
                   isHardcore: false,
                   onTap: () {
                     Navigator.pop(context);
@@ -323,14 +368,23 @@ class _ModeSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 1 ),
+            child: Center(
+              child: Icon(
+                PhosphorIcons.infinity(PhosphorIconsStyle.duotone),
+                color: AppTheme.textTertiary,
+                size: 22,
+              ),
+            ),
+          ),
           Row(
             children: [
               Expanded(
                 child: _ModeCard(
                   title: 'Quick Hard',
                   subtitle: '5 guess',
-                  description: 'Une erreur\net c\'est fini',
+                  description: 'One mistake\nand it\'s over',
                   isHardcore: true,
                   onTap: () {
                     Navigator.pop(context);
@@ -346,7 +400,7 @@ class _ModeSheet extends StatelessWidget {
                 child: _ModeCard(
                   title: 'Full Hard',
                   subtitle: '10 guess',
-                  description: 'Une erreur\net c\'est fini',
+                  description: 'One mistake\nand it\'s over',
                   isHardcore: true,
                   onTap: () {
                     Navigator.pop(context);
@@ -384,14 +438,19 @@ class _ModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isHardcore ? AppTheme.wrong : AppTheme.primary;
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppTheme.background,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: AppTheme.chipRadius,
+          border: Border.all(
+            color: isHardcore
+                ? AppTheme.wrong.withOpacity(0.2)
+                : AppTheme.textTertiary,
+            width: 0.5,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,23 +459,28 @@ class _ModeCard extends StatelessWidget {
               title,
               style: TextStyle(
                 color: color,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
               ),
             ),
+            const SizedBox(height: 2),
             Text(
               subtitle,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
+              style: TextStyle(
+                color: color.withOpacity(0.5), // même couleur que le titre mais à 50% — lie les deux
+                fontSize: 10,
+                letterSpacing: 1,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               description,
               style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 12,
+                height: 1.5,
               ),
             ),
           ],

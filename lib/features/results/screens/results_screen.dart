@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/pressable.dart';
 import '../../../data/services/hive_service.dart';
 import '../../game/providers/game_provider.dart';
 
@@ -41,9 +42,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Future<void> _saveRun() async {
     final avgTime = widget.itemResults.isEmpty
         ? 0
-        : widget.itemResults.fold<int>(
-        0, (sum, r) => sum + r.timeSeconds) ~/
+        : widget.itemResults.fold<int>(0, (sum, r) => sum + r.timeSeconds) ~/
         widget.itemResults.length;
+
+    final itemResultsMaps = widget.itemResults.map((r) => {
+      'score': r.score,
+      'time': r.timeSeconds,
+      'found': r.found,
+      'lettersRevealed': r.lettersRevealed,
+    }).toList();
 
     await HiveService().saveRun(
       totalScore: widget.totalScore,
@@ -52,6 +59,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       avgTimeSeconds: avgTime,
       mode: widget.mode.name,
       category: widget.category,
+      itemResults: itemResultsMaps,
     );
 
     await HiveService().checkAndUnlockAchievements(
@@ -59,19 +67,28 @@ class _ResultsScreenState extends State<ResultsScreen> {
       itemsFound: widget.itemsFound,
       totalItems: widget.totalItems,
       avgTime: avgTime,
-      usedHint: widget.itemResults.any((r) => false),
+      usedHint: widget.itemResults.any((r) => r.usedHint),
+      isHardcore: widget.mode.isHardcore,
+      category: widget.category,
+      itemResults: itemResultsMaps,
     );
   }
 
   void _share() {
     final text =
-        'VoidGuessr — ${widget.mode.label} · ${widget.itemsFound}/${widget.totalItems} trouvés · ${widget.totalScore} pts ! Peux-tu faire mieux ?';
+        'Void Guess · ${widget.mode.label} · ${widget.itemsFound}/${widget.totalItems} found · ${widget.totalScore} pts! Can you do better?';
 
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       Clipboard.setData(ClipboardData(text: text));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Résultat copié dans le presse-papiers !'),
+        SnackBar(
+          content: const Text(
+            'Result copied to clipboard!',
+            style: TextStyle(color: AppTheme.background, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: AppTheme.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppTheme.inputRadius),
         ),
       );
     } else {
@@ -80,11 +97,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   String get _runLabel {
-    if (widget.isHardcoreFail) return 'Run terminé !';
-    if (widget.itemsFound == widget.totalItems) return 'Run parfait !';
-    if (widget.itemsFound >= widget.totalItems * 0.7) return 'Bien joué !';
-    if (widget.itemsFound >= widget.totalItems * 0.4) return 'Pas mal...';
-    return 'Dur dur...';
+    if (widget.isHardcoreFail) return 'Run over.';
+    if (widget.itemsFound == widget.totalItems) return 'Perfect run.';
+    if (widget.itemsFound >= widget.totalItems * 0.7) return 'Well played.';
+    if (widget.itemsFound >= widget.totalItems * 0.4) return 'Not bad...';
+    return 'Rough one.';
   }
 
   Color get _runColor {
@@ -104,34 +121,40 @@ class _ResultsScreenState extends State<ResultsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
               Text(
                 _runLabel,
                 style: TextStyle(
                   color: _runColor,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
-                widget.mode.label,
+                widget.mode.label.toUpperCase(),
                 style: const TextStyle(
                   color: AppTheme.textSecondary,
-                  fontSize: 14,
-                  letterSpacing: 1,
+                  fontSize: 11,
+                  letterSpacing: 3,
+                  fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
 
               // Score global
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppTheme.neutralRadius,
+                  border: Border.all(
+                    color: AppTheme.textTertiary,
+                    width: 0.5,
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -142,14 +165,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       unit: 'pts',
                       color: _runColor,
                     ),
+                    Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
                     _GlobalStat(
-                      label: 'Trouvés',
+                      label: 'Found',
                       value: '${widget.itemsFound}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
+                    Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
                     _GlobalStat(
-                      label: 'Temps moyen',
+                      label: 'Avg time',
                       value: widget.itemResults.isEmpty
                           ? '0'
                           : '${widget.itemResults.fold<int>(0, (s, r) => s + r.timeSeconds) ~/ widget.itemResults.length}',
@@ -160,44 +185,51 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Détail par item
+              // Label détail
               const Text(
-                'Détail',
+                'BREAKDOWN',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
-                  fontSize: 12,
-                  letterSpacing: 2,
+                  fontSize: 10,
+                  letterSpacing: 3,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+
+              // Détail par item
               ...widget.itemResults.asMap().entries.map((entry) {
                 final i = entry.key;
                 final result = entry.value;
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: 6),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: AppTheme.neutralRadius,
                     border: Border.all(
                       color: result.found
-                          ? AppTheme.correct.withOpacity(0.3)
-                          : AppTheme.wrong.withOpacity(0.3),
-                      width: 1,
+                          ? AppTheme.correct.withOpacity(0.2)
+                          : AppTheme.wrong.withOpacity(0.15),
+                      width: 0.5,
                     ),
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        '${i + 1}',
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
+                      SizedBox(
+                        width: 20,
+                        child: Text(
+                          '${i + 1}',
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -208,8 +240,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                             color: result.found
                                 ? AppTheme.textPrimary
                                 : AppTheme.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -217,18 +249,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         '${result.timeSeconds}s',
                         style: const TextStyle(
                           color: AppTheme.textSecondary,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Text(
                         result.found ? '+${result.score}' : '+0',
                         style: TextStyle(
-                          color: result.found
-                              ? AppTheme.correct
-                              : AppTheme.wrong,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          color: result.found ? AppTheme.correct : AppTheme.wrong,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -236,31 +266,75 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 );
               }),
 
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => context.go(
-                  '/game',
-                  extra: {
-                    'mode': widget.mode,
-                    'category': widget.category,
-                  },
+              const SizedBox(height: 32),
+
+              // Bouton rejouer
+              Pressable(
+                onTap: () => context.go('/game', extra: {
+                  'mode': widget.mode,
+                  'category': widget.category,
+                }),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryDeep,
+                    borderRadius: AppTheme.cardRadius,
+                  ),
+                  child: const Text(
+                    'Play again',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.background,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
-                child: const Text('Rejouer'),
               ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _share,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.surface,
+              const SizedBox(height: 10),
+
+              // Bouton partager
+              Pressable(
+                onTap: _share,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: AppTheme.chipRadius,
+                    border: Border.all(
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: const Text(
+                    'Share result',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-                child: const Text('Partager'),
               ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => context.go('/'),
-                child: const Text(
-                  'Accueil',
-                  style: TextStyle(color: AppTheme.textSecondary),
+              const SizedBox(height: 10),
+
+              // Bouton accueil
+              Pressable(
+                onTap: () => context.go('/'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: const Text(
+                    'Home',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -297,25 +371,29 @@ class _GlobalStat extends StatelessWidget {
               value,
               style: TextStyle(
                 color: color,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(width: 2),
+            const SizedBox(width: 3),
             Text(
               unit,
               style: const TextStyle(
                 color: AppTheme.textSecondary,
-                fontSize: 13,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
         ),
+        const SizedBox(height: 2),
         Text(
           label,
           style: const TextStyle(
             color: AppTheme.textSecondary,
-            fontSize: 12,
+            fontSize: 11,
+            letterSpacing: 0.5,
           ),
         ),
       ],
