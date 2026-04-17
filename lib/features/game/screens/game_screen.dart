@@ -79,6 +79,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _onItemEnd() {
     _stopTimers();
+    _controller.clear();
     final state = ref.read(gameProvider);
     if (state.isRunFinished) {
       context.go('/results', extra: {
@@ -216,11 +217,52 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 ),
               _LetterDisplay(letters: state.revealedLetters),
               const SizedBox(height: 48),
-              _AutocompleteInput(
-                key: ValueKey(state.currentItemIndex),
+              TextField(
                 controller: _controller,
-                suggestions: _suggestions,
-                onSubmit: _submitGuess,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 15,
+                  decoration: TextDecoration.none,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Guess the title...',
+                  hintStyle: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
+                  ),
+                  filled: true,
+                  fillColor: AppTheme.surfaceHigh,
+                  border: OutlineInputBorder(
+                    borderRadius: AppTheme.inputRadius,
+                    borderSide: const BorderSide(
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: AppTheme.inputRadius,
+                    borderSide: const BorderSide(
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: AppTheme.inputRadius,
+                    borderSide: const BorderSide(
+                      color: AppTheme.primary,
+                      width: 1,
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+                      color: AppTheme.primary,
+                      size: 18,
+                    ),
+                    onPressed: () => _submitGuess(_controller.text),
+                  ),
+                ),
+                onSubmitted: _submitGuess,
               ),
               const SizedBox(height: 20),
               if (!state.usedHint)
@@ -462,82 +504,6 @@ class _LetterDisplay extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-class _AutocompleteInput extends StatelessWidget {
-  final TextEditingController controller;
-  final List<String> suggestions;
-  final Function(String) onSubmit;
-
-  const _AutocompleteInput({
-    super.key,
-    required this.controller,
-    required this.suggestions,
-    required this.onSubmit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Autocomplete<String>(
-      optionsBuilder: (textEditingValue) {
-        if (textEditingValue.text.length < 2) return const [];
-        return suggestions.where((s) => s
-            .toLowerCase()
-            .contains(textEditingValue.text.toLowerCase()));
-      },
-      onSelected: onSubmit,
-      fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
-        return TextField(
-          controller: controller,
-          focusNode: focusNode,
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 15,
-            decoration: TextDecoration.none,
-          ),
-          decoration: InputDecoration(
-            hintText: 'Guess the title...',
-            hintStyle: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: AppTheme.surfaceHigh,
-            border: OutlineInputBorder(
-              borderRadius: AppTheme.inputRadius,
-              borderSide: const BorderSide(
-                color: AppTheme.textTertiary,
-                width: 0.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppTheme.inputRadius,
-              borderSide: const BorderSide(
-                color: AppTheme.textTertiary,
-                width: 0.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppTheme.inputRadius,
-              borderSide: const BorderSide(
-                color: AppTheme.primary,
-                width: 1,
-              ),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
-                color: AppTheme.primary,
-                size: 18,
-              ),
-              onPressed: () => onSubmit(controller.text),
-            ),
-          ),
-          onSubmitted: onSubmit,
-        );
-      },
     );
   }
 }

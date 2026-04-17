@@ -33,6 +33,8 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class _ResultsScreenState extends State<ResultsScreen> {
+  int _vpGained = 0;
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +74,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
       category: widget.category,
       itemResults: itemResultsMaps,
     );
+
+    if (widget.totalItems == 10) {
+      final vp = await HiveService().updateRank(
+          widget.totalScore, widget.mode.isHardcore);
+      setState(() {
+        _vpGained = vp;
+      });
+    }
   }
 
   void _share() {
@@ -143,8 +153,22 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
 
+              if (widget.totalItems == 10) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _vpGained > 0 ? '+$_vpGained VP' : '$_vpGained VP',
+                  style: TextStyle(
+                    color: _vpGained > 0 ? AppTheme.correct : _vpGained < 0
+                        ? AppTheme.wrong
+                        : AppTheme.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                ),
+                    textAlign: TextAlign.center,
+                ),
+              ],
               // Score global
               Container(
                 padding: const EdgeInsets.all(24),

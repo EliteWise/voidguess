@@ -5,14 +5,98 @@ class HiveService {
   static const String _statsBox = 'stats';
   static const String _achievementsBox = 'achievements';
 
+  // ─── Ranked ─────────────────────────────────────────────
+
+  static const List<String> rankNames = [
+    'Void', 'Bronze', 'Silver', 'Gold',
+    'Platinum', 'Diamond', 'Master', 'Void Master',
+  ];
+
+  static const int vpPerRank = 10;
+
+  // VP gagnés selon le score et le rang actuel
+  // Full Hard = multiplicateur x2
+  int calculateVP(int score, int rankIndex, bool isHardcore) {
+    final thresholds = _vpThresholds[rankIndex];
+    int vp;
+    if (score < thresholds[0]) vp = -2;
+    else if (score < thresholds[1]) vp = -1;
+    else if (score < thresholds[2]) vp = 0;
+    else if (score < thresholds[3]) vp = 1;
+    else vp = 2;
+
+    if (isHardcore) vp *= 2;
+    return vp;
+  }
+
+  // Seuils [−2, −1, 0, +1, +2] pour chaque rang
+  static const List<List<int>> _vpThresholds = [
+    [80,   350,  750,  2500, 99999],  // Void
+    [150,  600,  1200, 3000, 99999],  // Bronze
+    [250,  900,  1800, 3500, 99999],  // Silver
+    [400,  1400, 2600, 4300, 99999],  // Gold
+    [600,  2000, 3500, 5300, 99999],  // Platinum
+    [800,  2800, 4800, 6300, 99999],  // Diamond
+    [1000, 3500, 5500, 7000, 99999],  // Master
+    [1200, 4000, 6000, 6500, 99999],  // Void Master
+  ];
+
+  int getCurrentVP() =>
+      Hive.box(_statsBox).get('currentVP', defaultValue: 0);
+
+  int getCurrentRankIndex() =>
+      Hive.box(_statsBox).get('rankIndex', defaultValue: 0);
+
+  String getCurrentRankName() => rankNames[getCurrentRankIndex()];
+
+  // Retourne les VP dans le rang actuel (0-9 sauf Void Master)
+  int getVPInCurrentRank() {
+    final totalVP = getCurrentVP();
+    if (getCurrentRankIndex() >= rankNames.length - 1) {
+      // Void Master — VP infinis, on retourne le total depuis Master max
+      return totalVP - (vpPerRank * (rankNames.length - 1));
+    }
+    return totalVP % vpPerRank;
+  }
+
+  Future<int> updateRank(int score, bool isHardcore) async {
+    final box = Hive.box(_statsBox);
+    int rankIndex = getCurrentRankIndex();
+    int totalVP = getCurrentVP();
+
+    final vp = calculateVP(score, rankIndex, isHardcore);
+    totalVP += vp;
+
+    // Montée de rang
+    while (rankIndex < rankNames.length - 1 &&
+        totalVP >= (rankIndex + 1) * vpPerRank) {
+      rankIndex++;
+    }
+
+    // Descente de rang — pas en dessous de Void
+    while (rankIndex > 0 &&
+        totalVP < rankIndex * vpPerRank) {
+      rankIndex--;
+    }
+
+    // Clamp le total VP au minimum du rang actuel
+    final minVP = rankIndex * vpPerRank;
+    if (totalVP < minVP) totalVP = minVP;
+
+    await box.put('currentVP', totalVP);
+    await box.put('rankIndex', rankIndex);
+
+    return vp;
+  }
+
+  // ─── Runs ───────────────────────────────────────────────
+
   Future<void> init() async {
     final dir = await getApplicationSupportDirectory();
     Hive.init(dir.path);
     await Hive.openBox(_statsBox);
     await Hive.openBox(_achievementsBox);
   }
-
-  // ─── Runs ───────────────────────────────────────────────
 
   Future<void> saveRun({
     required int totalScore,
@@ -121,7 +205,8 @@ class HiveService {
   }) async {
     final runs = getRuns();
     final totalRuns = runs.length;
-    final hardcoreRuns = runs.where((r) => (r['mode'] as String).toLowerCase().contains('hardcore')).length;
+    final hardcoreRuns = runs.where((r) =>
+        (r['mode'] as String).toLowerCase().contains('hardcore')).length;
     final gameRuns = runs.where((r) => r['category'] == 'game').length;
     final movieRuns = runs.where((r) => r['category'] == 'movie').length;
 
@@ -145,18 +230,13 @@ class HiveService {
     if (!usedHint && itemsFound == totalItems && totalItems == 10) {
       await unlockAchievement('blindfolded');
     }
-    // ─── Score global ───────────────────────────────────────
+
     if (totalScore >= 5000) await unlockAchievement('grand_total');
-
-    // ─── Temps moyen ────────────────────────────────────────
     if (avgTime <= 8) await unlockAchievement('no_time_to_think');
-
-    // ─── Catégories ─────────────────────────────────────────
     if (gameRuns >= 5) await unlockAchievement('gamer');
     if (movieRuns >= 5) await unlockAchievement('cinephile');
     if (gameRuns >= 1 && movieRuns >= 1) await unlockAchievement('cultured');
 
-    // ─── Par item ───────────────────────────────────────────
     for (final result in itemResults) {
       final score = result['score'] as int? ?? 0;
       final time = result['time'] as int? ?? 99;
@@ -170,12 +250,10 @@ class HiveService {
       if (lettersRevealed <= 2) await unlockAchievement('second_letter');
     }
 
-    // ─── The One — 5 items consécutifs à 1000 pts ───────────
     await _checkTheOne(itemResults);
   }
 
   Future<void> _checkTheOne(List<Map> currentItemResults) async {
-    // Construit l'historique complet de tous les items
     final allResults = <Map>[];
     for (final run in getRuns()) {
       final results = List<Map>.from(run['itemResults'] as List? ?? []);
