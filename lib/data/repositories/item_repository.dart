@@ -39,4 +39,10 @@ class ItemRepository {
     }
     return items.map((i) => i.name).toList();
   }
+
+  String getRandomHints(String hint) {
+    final hints = hint.split(',').map((h) => h.trim()).toList();
+    hints.shuffle();
+    return hints.first;
+  }
 }

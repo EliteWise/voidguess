@@ -269,10 +269,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 GestureDetector(
                   onTap: () {
                     ref.read(gameProvider.notifier).useHint();
+                    final repo = ref.read(itemRepositoryProvider);
+                    final randomHint = repo.getRandomHints(state.currentItem!.hint);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Released in ${state.currentItem!.year}',
+                          'Released in ${state.currentItem!.year} ~ Ref: $randomHint',
                           style: const TextStyle(
                             color: AppTheme.background,
                             fontWeight: FontWeight.w600,

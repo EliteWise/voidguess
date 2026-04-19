@@ -21,6 +21,7 @@ class Pressable extends StatefulWidget{
 class _PressableState extends State<Pressable> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -57,7 +58,11 @@ class _PressableState extends State<Pressable> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
@@ -65,6 +70,7 @@ class _PressableState extends State<Pressable> with SingleTickerProviderStateMix
         scale: _scale,
         child: widget.child,
       ),
+      )
     );
   }
 }

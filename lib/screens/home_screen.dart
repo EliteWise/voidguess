@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/pressable.dart';
+import '../core/widgets/rank_emblem.dart';
 import '../features/game/providers/game_provider.dart';
 import '../data/services/hive_service.dart';
 
@@ -72,12 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Contenu principal
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -103,10 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Icon(
-                          PhosphorIcons.shield(PhosphorIconsStyle.fill),
-                          color: rankColor,
-                          size: 16,
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: RankEmblem(rankIndex: _rankIndex, size: 24),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -162,14 +160,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          ],
         ),
-      ),
     );
   }
 }
-
-// ... reste identique
 
 class _AnimatedTitle extends StatefulWidget {
   const _AnimatedTitle();
