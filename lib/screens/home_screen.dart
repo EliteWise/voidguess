@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/pressable.dart';
 import '../core/widgets/rank_emblem.dart';
+import '../core/widgets/update_banner.dart';
 import '../features/game/providers/game_provider.dart';
 import '../data/services/hive_service.dart';
 
@@ -80,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Spacer(),
+                  const UpdateBanner(),
                   const _AnimatedTitle(),
                   const SizedBox(height: 64),
                   _CategoryButton(
