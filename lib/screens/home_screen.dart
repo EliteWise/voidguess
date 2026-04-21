@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:voidguess/core/provider/locale_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/pressable.dart';
 import '../core/widgets/rank_emblem.dart';
@@ -8,14 +11,14 @@ import '../core/widgets/update_banner.dart';
 import '../features/game/providers/game_provider.dart';
 import '../data/services/hive_service.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _rankIndex = 0;
   int _vpInRank = 0;
 
@@ -66,11 +69,19 @@ class _HomeScreenState extends State<HomeScreen> {
     Icons.sell_outlined,       // Void Master
   ];
 
+  void _toggleLocale(lang) {
+    final newLocale = lang == 'fr' ? 'en' : 'fr';
+    ref.read(localeProvider.notifier).state = newLocale;
+    Hive.box('stats').put('locale', newLocale);
+  }
+
   @override
   Widget build(BuildContext context) {
     final rankName = HiveService.rankNames[_rankIndex];
     final rankColor = _rankColors[_rankIndex];
     final isVoidMaster = _rankIndex >= HiveService.rankNames.length - 1;
+
+    final locale = ref.watch(localeProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -80,6 +91,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Pressable(
+                      onTap: () => _toggleLocale(locale),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: AppTheme.inputRadius,
+                          border: Border.all(
+                            color: AppTheme.textTertiary,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          locale.toUpperCase(),
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   const Spacer(),
                   const UpdateBanner(),
                   const _AnimatedTitle(),
@@ -95,7 +133,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: PhosphorIcons.filmSlate(PhosphorIconsStyle.regular),
                     onTap: () => _showModeSheet(context, 'movie'),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 12),
+                  _CategoryButton(
+                    label: 'Flags',
+                    icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
+                    subtitle: '10 flags · Ranked',
+                    onTap: () => context.go('/flag_game'),
+                  ),
+                  Spacer(),
 
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
@@ -295,11 +340,13 @@ class _CategoryButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final String subtitle;
 
   const _CategoryButton({
     required this.label,
     required this.icon,
     required this.onTap,
+    this.subtitle = 'Quick · Full · Hardcore',
   });
 
   @override
@@ -355,8 +402,8 @@ class _CategoryButton extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    'Quick · Full · Hardcore',
+                  Text(
+                    subtitle,
                     style: TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 11,

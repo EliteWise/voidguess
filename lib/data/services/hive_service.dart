@@ -41,6 +41,7 @@ class HiveService {
     [1200, 4000, 6000, 6500, 99999],  // Void Master
   ];
 
+
   int getCurrentVP() =>
       Hive.box(_statsBox).get('currentVP', defaultValue: 0);
 
@@ -85,6 +86,64 @@ class HiveService {
 
     await box.put('currentVP', totalVP);
     await box.put('rankIndex', rankIndex);
+
+    return vp;
+  }
+
+  // ─── Flag Ranked ─────────────────────────────────────────────────────────────
+
+// Seuils correct/total pour -1 / 0 / +1 VP par rang
+  static const List<List<int>> _flagVpThresholds = [
+    [3, 4, 10],  // Void     — <3 = -1, 3 = 0, >=4 = +1
+    [3, 5, 10],  // Bronze   — <3 = -1, 3-4 = 0, >=5 = +1
+    [4, 5, 10],  // Silver   — <4 = -1, 4 = 0, >=5 = +1
+    [4, 6, 10],  // Gold     — <4 = -1, 4-5 = 0, >=6 = +1
+    [5, 6, 10],  // Platinum — <5 = -1, 5 = 0, >=6 = +1
+    [5, 7, 10],  // Diamond  — <5 = -1, 5-6 = 0, >=7 = +1
+    [6, 7, 10],  // Master   — <6 = -1, 6 = 0, >=7 = +1
+    [6, 8, 10],  // VoidMaster — <6 = -1, 6-7 = 0, >=8 = +1
+  ];
+
+  Future<int> updateFlagRank({
+    required int correctCount,
+    required int totalItems,
+  }) async {
+    final rankIndex = getCurrentRankIndex();
+    final thresholds = _flagVpThresholds[rankIndex.clamp(0, _flagVpThresholds.length - 1)];
+
+    int vp;
+    if (correctCount < thresholds[0]) {
+      vp = -1;
+    } else if (correctCount < thresholds[1]) {
+      vp = 0;
+    } else {
+      vp = 1;
+    }
+
+    // Réutilise la même logique de rank up/down que Void Guess
+    final box = Hive.box(_statsBox);
+    int totalVP = getCurrentVP();
+    int newRankIndex = rankIndex;
+
+    totalVP += vp;
+
+    // Rank up
+    while (newRankIndex < rankNames.length - 1 &&
+        totalVP >= (newRankIndex + 1) * vpPerRank) {
+      newRankIndex++;
+    }
+
+    // Rank down
+    while (newRankIndex > 0 && totalVP < newRankIndex * vpPerRank) {
+      newRankIndex--;
+    }
+
+    // Clamp au minimum du rang
+    final minVP = newRankIndex * vpPerRank;
+    if (totalVP < minVP) totalVP = minVP;
+
+    await box.put('currentVP', totalVP);
+    await box.put('rankIndex', newRankIndex);
 
     return vp;
   }

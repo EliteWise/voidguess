@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:voidguess/core/widgets/floating_letters.dart';
+import 'core/provider/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'data/services/hive_service.dart';
@@ -8,9 +11,13 @@ import 'data/services/hive_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HiveService().init();
+  final savedLocale = Hive.box('stats').get('locale', defaultValue: 'fr');
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      overrides: [
+        localeProvider.overrideWith((ref) => savedLocale),
+      ],
+      child: const MyApp(),
     ),
   );
 }
