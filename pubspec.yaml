@@ -45,6 +45,7 @@ dependencies:
   package_info_plus: ^9.0.1
   url_launcher: ^6.3.2
   country_flags: ^4.1.2
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +75,7 @@ flutter:
     - assets/data/achievements.json
     - assets/images/ranks/
     - assets/data/countries.json
+    - assets/adi-registration.properties
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
