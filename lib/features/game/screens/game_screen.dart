@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../../core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../providers/game_provider.dart';
@@ -42,7 +43,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Future<void> _loadSuggestions() async {
     final repo = ref.read(itemRepositoryProvider);
-    final names = await repo.getItemNames(category: widget.category);
+    final locale = ref.read(localeProvider);
+    final names = await repo.getItemNames(category: widget.category, locale: locale);
     setState(() => _suggestions = names);
   }
 
@@ -98,11 +100,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _showItemRecap(GameState state) {
     final found = !state.isLost;
+    final locale = ref.read(localeProvider);
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => _ItemRecapDialog(
-        itemName: state.currentItem!.name,
+        itemName: state.currentItem!.getName(locale),
         score: state.score,
         timeSeconds: state.timeSeconds,
         found: found,
@@ -113,7 +116,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ref.read(gameProvider.notifier).nextItem().then((_) {
             _startTimers();
           });
-        },
+        }, category: state.category,
       ),
     );
   }
@@ -128,6 +131,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
+    final locale = ref.watch(localeProvider);
 
     if (state.isLoading) {
       return const Scaffold(
@@ -146,10 +150,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         elevation: 0,
         title: Text(
           '${state.currentItemIndex + 1} / ${state.totalItems}',
-          style: const TextStyle(
+          style: AppTheme.inter(
             color: AppTheme.textSecondary,
             fontSize: 13,
-            letterSpacing: 1,
           ),
         ),
         centerTitle: true,
@@ -159,11 +162,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             child: Center(
               child: Text(
                 '${state.timeSeconds}s',
-                style: const TextStyle(
+                style: AppTheme.inter(
                   color: AppTheme.hint,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -174,11 +176,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           child: Center(
             child: Text(
               '${state.totalScore} pts',
-              style: const TextStyle(
+              style: AppTheme.inter(
                 color: AppTheme.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -205,13 +206,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       width: 0.5,
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'HARDCORE',
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.wrong,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 3,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
@@ -219,14 +220,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               const SizedBox(height: 48),
               TextField(
                 controller: _controller,
-                style: const TextStyle(
+                style: AppTheme.inter(
                   color: AppTheme.textPrimary,
                   fontSize: 15,
-                  decoration: TextDecoration.none,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Guess the title...',
-                  hintStyle: const TextStyle(
+                  hintStyle: AppTheme.inter(
                     color: AppTheme.textSecondary,
                     fontSize: 14,
                   ),
@@ -270,12 +270,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   onTap: () {
                     ref.read(gameProvider.notifier).useHint();
                     final repo = ref.read(itemRepositoryProvider);
-                    final randomHint = repo.getRandomHints(state.currentItem!.hint);
+                    final randomHint = repo.getRandomHint(state.currentItem!.getHint(locale));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Released in ${state.currentItem!.year} ~ Ref: $randomHint',
-                          style: const TextStyle(
+                          '${state.currentItem!.year}  ·  $randomHint',
+                          style: AppTheme.inter(
                             color: AppTheme.background,
                             fontWeight: FontWeight.w600,
                           ),
@@ -308,13 +308,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           color: AppTheme.hint,
                           size: 14,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'Hint — release year  (÷2 score)',
-                          style: TextStyle(
+                          'Hint  ·  year + keyword  (score ÷2)',
+                          style: AppTheme.inter(
                             color: AppTheme.hint,
                             fontSize: 12,
-                            letterSpacing: 0.3,
                           ),
                         ),
                       ],
@@ -338,6 +337,7 @@ class _ItemRecapDialog extends StatelessWidget {
   final int current;
   final int total;
   final VoidCallback onNext;
+  final String category;
 
   const _ItemRecapDialog({
     required this.itemName,
@@ -347,6 +347,7 @@ class _ItemRecapDialog extends StatelessWidget {
     required this.current,
     required this.total,
     required this.onNext,
+    required this.category
   });
 
   @override
@@ -360,21 +361,22 @@ class _ItemRecapDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              found ? 'Found !' : 'Missed !',
-              style: TextStyle(
+              found ? 'Found!' : 'Missed!',
+              style: AppTheme.inter(
                 color: found ? AppTheme.correct : AppTheme.wrong,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               itemName,
-              style: const TextStyle(
+              style: AppTheme.inter(
                 color: AppTheme.textPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
               ),
               textAlign: TextAlign.center,
             ),
@@ -392,7 +394,7 @@ class _ItemRecapDialog extends StatelessWidget {
                   value: '${timeSeconds}s',
                 ),
                 _RecapStat(
-                  label: 'Item',
+                  label: category == 'game' ? 'Game' : 'Film',
                   value: '$current/$total',
                   color: AppTheme.primary,
                 ),
@@ -407,21 +409,20 @@ class _ItemRecapDialog extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary,
+                    color: AppTheme.primaryDeep,
                     borderRadius: AppTheme.cardRadius,
                   ),
-                  child: const Text(
+                  child: Text(
                     'Next',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.background,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
                     ),
                   ),
                 ),
-              )
+              ),
             ),
           ],
         ),
@@ -447,7 +448,7 @@ class _RecapStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(
+          style: AppTheme.inter(
             color: color,
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -457,10 +458,9 @@ class _RecapStat extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: AppTheme.inter(
             color: AppTheme.textSecondary,
             fontSize: 11,
-            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -496,12 +496,10 @@ class _LetterDisplay extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             isRevealed ? letter.toUpperCase() : '',
-            style: const TextStyle(
+            style: AppTheme.inter(
               color: AppTheme.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              letterSpacing: 2,
-              decoration: TextDecoration.none,
             ),
           ),
         );

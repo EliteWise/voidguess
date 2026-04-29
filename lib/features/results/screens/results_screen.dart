@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:voidguess/core/widgets/result_stat.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/rank_progress_bar.dart';
 import '../../../data/services/hive_service.dart';
 import '../../game/providers/game_provider.dart';
 
@@ -34,6 +36,7 @@ class ResultsScreen extends StatefulWidget {
 
 class _ResultsScreenState extends State<ResultsScreen> {
   int _vpGained = 0;
+  int _rankIndexBefore = 0;
 
   @override
   void initState() {
@@ -76,10 +79,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
 
     if (widget.totalItems == 10) {
+      final rankIndexBefore = HiveService().getCurrentRankIndex();
       final vp = await HiveService().updateRank(
           widget.totalScore, widget.mode.isHardcore);
       setState(() {
         _vpGained = vp;
+        _rankIndexBefore = rankIndexBefore;
       });
     }
   }
@@ -92,9 +97,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
       Clipboard.setData(ClipboardData(text: text));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
+          content: Text(
             'Result copied to clipboard!',
-            style: TextStyle(color: AppTheme.background, fontWeight: FontWeight.w600),
+            style: AppTheme.inter(
+              color: AppTheme.background,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           backgroundColor: AppTheme.primary,
           behavior: SnackBarBehavior.floating,
@@ -107,11 +115,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   String get _runLabel {
-    if (widget.isHardcoreFail) return 'Run over.';
-    if (widget.itemsFound == widget.totalItems) return 'Perfect run.';
-    if (widget.itemsFound >= widget.totalItems * 0.7) return 'Well played.';
-    if (widget.itemsFound >= widget.totalItems * 0.4) return 'Not bad...';
-    return 'Rough one.';
+    if (widget.isHardcoreFail) return 'Game over!';
+    if (widget.itemsFound == widget.totalItems) return 'Perfect!';
+    if (widget.itemsFound >= widget.totalItems * 0.7) return 'Great job!';
+    if (widget.itemsFound >= widget.totalItems * 0.4) return 'Good effort!';
+    return 'Keep practicing!';
   }
 
   Color get _runColor {
@@ -132,9 +140,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 48),
+
+              // ── Label run ────────────────────────────────────────────────
               Text(
                 _runLabel,
-                style: TextStyle(
+                style: AppTheme.inter(
                   color: _runColor,
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
@@ -144,32 +154,29 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                widget.mode.label.toUpperCase(),
-                style: const TextStyle(
+                widget.mode.label,
+                style: AppTheme.inter(
                   color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  letterSpacing: 3,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
               ),
 
-              if (widget.totalItems == 10) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _vpGained > 0 ? '+$_vpGained VP' : '$_vpGained VP',
-                  style: TextStyle(
-                    color: _vpGained > 0 ? AppTheme.correct : _vpGained < 0
-                        ? AppTheme.wrong
-                        : AppTheme.textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                ),
-                    textAlign: TextAlign.center,
+              // ── VP ───────────────────────────────────────────────────────
+              if (widget.totalItems == 10 && _vpGained != 0) ...[
+                const SizedBox(height: 24),
+                RankProgressBar(
+                  vpBefore: HiveService().getVPInCurrentRank() - _vpGained,
+                  vpGained: _vpGained,
+                  rankIndexBefore: _rankIndexBefore,
+                  rankIndexAfter: HiveService().getCurrentRankIndex(),
                 ),
               ],
-              // Score global
+
+              const SizedBox(height: 32),
+
+              // ── Score global ─────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -183,21 +190,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _GlobalStat(
+                    ResultStat(
                       label: 'Score',
                       value: '${widget.totalScore}',
                       unit: 'pts',
                       color: _runColor,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
-                    _GlobalStat(
+                    ResultStat(
                       label: 'Found',
                       value: '${widget.itemsFound}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
-                    _GlobalStat(
+                    ResultStat(
                       label: 'Avg time',
                       value: widget.itemResults.isEmpty
                           ? '0'
@@ -211,19 +218,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
               const SizedBox(height: 32),
 
-              // Label détail
-              const Text(
-                'BREAKDOWN',
-                style: TextStyle(
+              // ── Breakdown ────────────────────────────────────────────────
+              Text(
+                'Breakdown',
+                style: AppTheme.inter(
                   color: AppTheme.textSecondary,
-                  fontSize: 10,
-                  letterSpacing: 3,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 12),
 
-              // Détail par item
               ...widget.itemResults.asMap().entries.map((entry) {
                 final i = entry.key;
                 final result = entry.value;
@@ -238,8 +243,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     borderRadius: AppTheme.neutralRadius,
                     border: Border.all(
                       color: result.found
-                          ? AppTheme.correct.withOpacity(0.2)
-                          : AppTheme.wrong.withOpacity(0.15),
+                          ? AppTheme.correct.withOpacity(0.3)
+                          : AppTheme.wrong.withOpacity(0.3),
                       width: 0.5,
                     ),
                   ),
@@ -249,10 +254,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         width: 20,
                         child: Text(
                           '${i + 1}',
-                          style: const TextStyle(
+                          style: AppTheme.inter(
                             color: AppTheme.textSecondary,
                             fontSize: 11,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -260,7 +264,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       Expanded(
                         child: Text(
                           result.name,
-                          style: TextStyle(
+                          style: AppTheme.inter(
                             color: result.found
                                 ? AppTheme.textPrimary
                                 : AppTheme.textSecondary,
@@ -271,18 +275,20 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       ),
                       Text(
                         '${result.timeSeconds}s',
-                        style: const TextStyle(
+                        style: AppTheme.inter(
                           color: AppTheme.textSecondary,
                           fontSize: 11,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Text(
-                        result.found ? '+${result.score}' : '+0',
-                        style: TextStyle(
-                          color: result.found ? AppTheme.correct : AppTheme.wrong,
+                        result.found ? '+${result.score}' : '—',
+                        style: AppTheme.inter(
+                          color: result.found
+                              ? AppTheme.correct
+                              : AppTheme.textTertiary,
                           fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -292,7 +298,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
               const SizedBox(height: 32),
 
-              // Bouton rejouer
+              // ── Boutons ──────────────────────────────────────────────────
               Pressable(
                 onTap: () => context.go('/game', extra: {
                   'mode': widget.mode,
@@ -305,21 +311,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     color: AppTheme.primaryDeep,
                     borderRadius: AppTheme.cardRadius,
                   ),
-                  child: const Text(
+                  child: Text(
                     'Play again',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.background,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 10),
 
-              // Bouton partager
               Pressable(
                 onTap: _share,
                 child: Container(
@@ -332,10 +336,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       width: 0.5,
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Share result',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -345,18 +349,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Bouton accueil
               Pressable(
                 onTap: () => context.go('/'),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: const Text(
+                  child: Text(
                     'Home',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -366,61 +368,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _GlobalStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final Color color;
-
-  const _GlobalStat({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(width: 3),
-            Text(
-              unit,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
     );
   }
 }

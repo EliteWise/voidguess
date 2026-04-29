@@ -26,9 +26,9 @@ class _StatsScreenState extends State<StatsScreen> {
           icon: Icon(PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular), color: AppTheme.textSecondary),
           onPressed: () => context.go('/'),
         ),
-        title: const Text(
+        title: Text(
           'Stats & Achievements',
-          style: TextStyle(
+          style: AppTheme.inter(
             color: AppTheme.textPrimary,
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -109,7 +109,7 @@ class _TabPill extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: AppTheme.inter(
               color: selected ? AppTheme.primary : AppTheme.textSecondary,
               fontSize: 13,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
@@ -139,12 +139,11 @@ class _StatsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'BEST RUN',
-            style: TextStyle(
+          Text(
+            'Best run',
+            style: AppTheme.inter(
               color: AppTheme.textSecondary,
-              fontSize: 10,
-              letterSpacing: 3,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -160,9 +159,9 @@ class _StatsTab extends StatelessWidget {
                   width: 0.5,
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'No runs completed yet.',
-                style: TextStyle(
+                style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 13,
                 ),
@@ -226,7 +225,7 @@ class _StatsTab extends StatelessWidget {
                     ),
                     child: Text(
                       (bestRun['mode'] as String).toUpperCase(),
-                      style: const TextStyle(
+                      style: AppTheme.inter(
                         color: AppTheme.primary,
                         fontSize: 10,
                         letterSpacing: 2,
@@ -239,12 +238,11 @@ class _StatsTab extends StatelessWidget {
             ),
 
           const SizedBox(height: 32),
-          const Text(
-            'GLOBAL',
-            style: TextStyle(
+          Text(
+            'Global',
+            style: AppTheme.inter(
               color: AppTheme.textSecondary,
-              fontSize: 10,
-              letterSpacing: 3,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -261,7 +259,8 @@ class _StatsTab extends StatelessWidget {
               Expanded(
                 child: _GlobalCard(
                   label: 'Success rate',
-                  value: '${successRate.toStringAsFixed(0)}%',
+                  value: successRate.toStringAsFixed(0),
+                  unit: '%',
                 ),
               ),
             ],
@@ -272,14 +271,16 @@ class _StatsTab extends StatelessWidget {
               Expanded(
                 child: _GlobalCard(
                   label: 'Best score',
-                  value: '$bestScore pts',
+                  value: '$bestScore',
+                  unit: 'pts',
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _GlobalCard(
                   label: 'Best avg time',
-                  value: bestAvgTime == 9999 ? '--' : '${bestAvgTime}s',
+                  value: bestAvgTime == 9999 ? '--' : '$bestAvgTime',
+                  unit: bestAvgTime == 9999 ? null : 's',
                 ),
               ),
             ],
@@ -313,17 +314,17 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               value,
-              style: TextStyle(
+              style: AppTheme.inter(
                 color: color,
                 fontSize: 24,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 letterSpacing: -0.5,
               ),
             ),
             const SizedBox(width: 3),
             Text(
               unit,
-              style: const TextStyle(
+              style: AppTheme.inter(
                 color: AppTheme.textSecondary,
                 fontSize: 11,
               ),
@@ -333,7 +334,7 @@ class _StatCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: AppTheme.inter(
             color: AppTheme.textSecondary,
             fontSize: 11,
             letterSpacing: 0.3,
@@ -347,10 +348,12 @@ class _StatCard extends StatelessWidget {
 class _GlobalCard extends StatelessWidget {
   final String label;
   final String value;
+  final String? unit;
 
   const _GlobalCard({
     required this.label,
     required this.value,
+    this.unit,
   });
 
   @override
@@ -368,22 +371,37 @@ class _GlobalCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: AppTheme.inter(
+                  color: AppTheme.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              if (unit != null) ...[
+                const SizedBox(width: 3),
+                Text(
+                  unit!,
+                  style: AppTheme.inter(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: AppTheme.inter(
               color: AppTheme.textSecondary,
               fontSize: 11,
-              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -464,17 +482,16 @@ class _AchievementsTabState extends State<_AchievementsTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    cat.toUpperCase(),
-                    style: const TextStyle(
+                    '${cat[0].toUpperCase()}${cat.substring(1)}',
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
-                      fontSize: 10,
-                      letterSpacing: 3,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   Text(
                     '$unlockedCount/${items.length}',
-                    style: const TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 10,
                       letterSpacing: 1,
@@ -526,7 +543,7 @@ class _AchievementsTabState extends State<_AchievementsTab> {
                         children: [
                           Text(
                             achievement.title,
-                            style: TextStyle(
+                            style: AppTheme.inter(
                               color: isUnlocked
                                   ? AppTheme.textPrimary
                                   : AppTheme.textTertiary,
@@ -540,7 +557,7 @@ class _AchievementsTabState extends State<_AchievementsTab> {
                           const SizedBox(height: 2),
                           Text(
                             _getDescription(achievement, isUnlocked),
-                            style: TextStyle(
+                            style: AppTheme.inter(
                               color: isUnlocked
                                   ? AppTheme.textSecondary
                                   : AppTheme.textTertiary,

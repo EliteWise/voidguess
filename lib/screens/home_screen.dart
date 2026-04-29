@@ -48,25 +48,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   static const List<Color> _rankColors = [
-    Color(0xFF444458), // Void — gris
-    Color(0xFFCD7F32), // Bronze
-    Color(0xFFC0C0C0), // Silver
-    Color(0xFFFFD700), // Gold
-    Color(0xFF00E5CC), // Platinum — cyan
-    Color(0xFF4FC3F7), // Diamond — bleu clair
-    Color(0xFF9B59B6), // Master — violet
-    Color(0xFFFF1744), // Void Master — rouge
-  ];
-
-  static final List<IconData> _rankIcons = [
-    Icons.circle_outlined,      // Void
-    Icons.shield_outlined,      // Bronze
-    Icons.shield_outlined,      // Silver
-    Icons.shield_outlined,      // Gold
-    Icons.diamond_outlined,     // Platinum
-    Icons.diamond_outlined,     // Diamond
-    Icons.bolt_outlined,        // Master
-    Icons.sell_outlined,       // Void Master
+    Color(0xFF444458),
+    Color(0xFFCD7F32),
+    Color(0xFFC0C0C0),
+    Color(0xFFFFD700),
+    Color(0xFF00E5CC),
+    Color(0xFF4FC3F7),
+    Color(0xFF9B59B6),
+    Color(0xFFFF1744),
   ];
 
   void _toggleLocale(lang) {
@@ -80,7 +69,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final rankName = HiveService.rankNames[_rankIndex];
     final rankColor = _rankColors[_rankIndex];
     final isVoidMaster = _rankIndex >= HiveService.rankNames.length - 1;
-
     final locale = ref.watch(localeProvider);
 
     return Scaffold(
@@ -88,126 +76,121 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Pressable(
-                      onTap: () => _toggleLocale(locale),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: AppTheme.inputRadius,
-                          border: Border.all(
-                            color: AppTheme.textTertiary,
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          locale.toUpperCase(),
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
-                          ),
-                        ),
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Pressable(
+                  onTap: () => _toggleLocale(locale),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: AppTheme.inputRadius,
+                      border: Border.all(
+                        color: AppTheme.textTertiary,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Text(
+                      locale.toUpperCase(),
+                      style: AppTheme.inter(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  const UpdateBanner(),
-                  const _AnimatedTitle(),
-                  const SizedBox(height: 64),
-                  _CategoryButton(
-                    label: 'Jeux vidéo',
-                    icon: PhosphorIcons.gameController(PhosphorIconsStyle.regular),
-                    onTap: () => _showModeSheet(context, 'game'),
-                  ),
-                  const SizedBox(height: 12),
-                  _CategoryButton(
-                    label: 'Films',
-                    icon: PhosphorIcons.filmSlate(PhosphorIconsStyle.regular),
-                    onTap: () => _showModeSheet(context, 'movie'),
-                  ),
-                  const SizedBox(height: 12),
-                  _CategoryButton(
-                    label: 'Flags',
-                    icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
-                    subtitle: '10 flags · Ranked',
-                    onTap: () => context.go('/flag_game'),
-                  ),
-                  Spacer(),
-
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: RankEmblem(rankIndex: _rankIndex, size: 24),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          isVoidMaster
-                              ? '$rankName  $_vpInRank VP'
-                              : '$rankName  $_vpInRank / 10 VP',
-                          style: TextStyle(
-                            color: rankColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Pressable(
-                    onTap: () => context.go('/stats'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: AppTheme.neutralRadius,
-                        border: Border.all(
-                          color: AppTheme.textTertiary,
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            PhosphorIcons.trophy(PhosphorIconsStyle.regular),
-                            color: AppTheme.textSecondary,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Stats & Achievements',
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
-            ),
+              const Spacer(),
+              const UpdateBanner(),
+              const _AnimatedTitle(),
+              const SizedBox(height: 64),
+              _CategoryButton(
+                label: 'Jeux vidéo',
+                icon: PhosphorIcons.gameController(PhosphorIconsStyle.regular),
+                onTap: () => _showModeSheet(context, 'game'),
+              ),
+              const SizedBox(height: 12),
+              _CategoryButton(
+                label: 'Films',
+                icon: PhosphorIcons.filmSlate(PhosphorIconsStyle.regular),
+                onTap: () => _showModeSheet(context, 'movie'),
+              ),
+              const SizedBox(height: 12),
+              _CategoryButton(
+                label: 'Flags',
+                icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
+                subtitle: '10 flags · Ranked',
+                onTap: () => context.go('/flag_game'),
+              ),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: RankEmblem(rankIndex: _rankIndex, size: 24),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isVoidMaster
+                          ? '$rankName  $_vpInRank VP'
+                          : '$rankName  $_vpInRank / 10 VP',
+                      style: AppTheme.inter(
+                        color: rankColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Pressable(
+                onTap: () => context.go('/stats'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: AppTheme.neutralRadius,
+                    border: Border.all(
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        PhosphorIcons.trophy(PhosphorIconsStyle.regular),
+                        color: AppTheme.textSecondary,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Stats & Achievements',
+                        style: AppTheme.inter(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
+      ),
     );
   }
 }
@@ -260,13 +243,12 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
               padding: const EdgeInsets.symmetric(horizontal: 3),
               child: Text(
                 letter,
-                style: TextStyle(
+                style: AppTheme.inter(
                   color: isRevealed ? color1 : AppTheme.textTertiary,
                   fontSize: 52,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 4,
-                  decoration: TextDecoration.none,
-                ),
+                ).copyWith(decoration: TextDecoration.none),
               ),
             );
           }).toList(),
@@ -280,13 +262,12 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Text(
                 letter,
-                style: TextStyle(
+                style: AppTheme.inter(
                   color: isRevealed ? color2 : AppTheme.textTertiary,
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 3,
-                  decoration: TextDecoration.none,
-                ),
+                ).copyWith(decoration: TextDecoration.none),
               ),
             );
           }).toList(),
@@ -357,8 +338,8 @@ class _CategoryButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment(1.0, -1.0),
-            end: Alignment(-0.5, 1.0),
+            begin: const Alignment(1.0, -1.0),
+            end: const Alignment(-0.5, 1.0),
             colors: [
               AppTheme.primaryDeep.withOpacity(0.08),
               AppTheme.surface,
@@ -394,20 +375,18 @@ class _CategoryButton extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textPrimary,
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
-                      fontSize: 11,
-                      letterSpacing: 1,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -449,13 +428,12 @@ class _ModeSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Choose your mode',
-            style: TextStyle(
+            style: AppTheme.inter(
               color: AppTheme.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
             ),
             textAlign: TextAlign.center,
           ),
@@ -465,7 +443,7 @@ class _ModeSheet extends StatelessWidget {
               Expanded(
                 child: _ModeCard(
                   title: 'Quick',
-                  subtitle: '5 guess',
+                  subtitle: '5 items',
                   description: 'Fast session\n~2 minutes',
                   isHardcore: false,
                   isRanked: false,
@@ -483,7 +461,7 @@ class _ModeSheet extends StatelessWidget {
               Expanded(
                 child: _ModeCard(
                   title: 'Full',
-                  subtitle: '10 guess',
+                  subtitle: '10 items',
                   description: 'Full run\n~4 minutes',
                   isHardcore: false,
                   isRanked: true,
@@ -500,12 +478,12 @@ class _ModeSheet extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 1),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Center(
               child: Icon(
                 PhosphorIcons.infinity(PhosphorIconsStyle.duotone),
                 color: AppTheme.textTertiary,
-                size: 22,
+                size: 20,
               ),
             ),
           ),
@@ -514,7 +492,7 @@ class _ModeSheet extends StatelessWidget {
               Expanded(
                 child: _ModeCard(
                   title: 'Quick Hard',
-                  subtitle: '5 guess',
+                  subtitle: '5 items',
                   description: 'One mistake\nand it\'s over',
                   isHardcore: true,
                   isRanked: false,
@@ -532,7 +510,7 @@ class _ModeSheet extends StatelessWidget {
               Expanded(
                 child: _ModeCard(
                   title: 'Full Hard',
-                  subtitle: '10 guess',
+                  subtitle: '10 items',
                   description: 'One mistake\nand it\'s over',
                   isHardcore: true,
                   isRanked: true,
@@ -603,20 +581,18 @@ class _ModeCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
+                      style: AppTheme.inter(
                         color: color,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
                       ),
                     ),
                     Text(
                       subtitle,
-                      style: TextStyle(
+                      style: AppTheme.inter(
                         color: color.withOpacity(0.5),
-                        fontSize: 10,
-                        letterSpacing: 1,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -635,13 +611,13 @@ class _ModeCard extends StatelessWidget {
                       const SizedBox(width: 3),
                       Text(
                         isDoubleVP ? '×2 VP' : 'RANKED',
-                        style: TextStyle(
+                        style: AppTheme.inter(
                           color: isDoubleVP
                               ? AppTheme.wrong.withOpacity(0.6)
                               : AppTheme.primary.withOpacity(0.4),
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -651,10 +627,9 @@ class _ModeCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               description,
-              style: const TextStyle(
+              style: AppTheme.inter(
                 color: AppTheme.textSecondary,
                 fontSize: 12,
-                height: 1.5,
               ),
             ),
           ],

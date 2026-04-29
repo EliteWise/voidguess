@@ -29,19 +29,19 @@ class ItemRepository {
     return filtered.first;
   }
 
-  Future<List<String>> getItemNames({String? category}) async {
+  // Retourne les noms dans la langue donnée
+  Future<List<String>> getItemNames({String? category, required String locale}) async {
     final items = await getItems();
+    var filtered = items;
     if (category != null) {
-      return items
-          .where((i) => i.category == category)
-          .map((i) => i.name)
-          .toList();
+      filtered = filtered.where((i) => i.category == category).toList();
     }
-    return items.map((i) => i.name).toList();
+    return filtered.map((i) => i.getName(locale)).toList();
   }
 
-  String getRandomHints(String hint) {
-    final hints = hint.split(',').map((h) => h.trim()).toList();
+  // Prend un hint string (déjà extrait via item.getHint(locale))
+  String getRandomHint(String hintString) {
+    final hints = hintString.split(',').map((h) => h.trim()).toList();
     hints.shuffle();
     return hints.first;
   }

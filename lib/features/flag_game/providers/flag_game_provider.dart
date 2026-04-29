@@ -48,6 +48,7 @@ class FlagGameState {
   final List<int> usedCountryIds;
   final bool isLoading;
   final bool isRunFinished;
+  final int? selectedCountryId;
 
   const FlagGameState({
     this.phase = FlagGamePhase.waiting,
@@ -60,6 +61,7 @@ class FlagGameState {
     this.usedCountryIds = const [],
     this.isLoading = true,
     this.isRunFinished = false,
+    this.selectedCountryId,
   });
 
   // Nombre total d'items par run — fixe à 10
@@ -82,6 +84,7 @@ class FlagGameState {
     List<int>? usedCountryIds,
     bool? isLoading,
     bool? isRunFinished,
+    int? selectedCountryId,
   }) {
     return FlagGameState(
       phase: phase ?? this.phase,
@@ -94,6 +97,7 @@ class FlagGameState {
       usedCountryIds: usedCountryIds ?? this.usedCountryIds,
       isLoading: isLoading ?? this.isLoading,
       isRunFinished: isRunFinished ?? this.isRunFinished,
+      selectedCountryId: selectedCountryId ?? this.selectedCountryId,
     );
   }
 }
@@ -150,7 +154,7 @@ class FlagGameNotifier extends StateNotifier<FlagGameState> {
 
     // Timer écoulé — 15 secondes max
     if (newTime >= 15) {
-      _handleAnswer(correct: false);
+      _handleAnswer(correct: false, selectedId: -1);
       return;
     }
 
@@ -162,10 +166,10 @@ class FlagGameNotifier extends StateNotifier<FlagGameState> {
     if (state.phase != FlagGamePhase.playing) return;
 
     final correct = selected.id == state.correctCountry!.id;
-    _handleAnswer(correct: correct);
+    _handleAnswer(correct: correct, selectedId: selected.id);
   }
 
-  void _handleAnswer({required bool correct}) {
+  void _handleAnswer({required bool correct, required int selectedId}) {
     final score = correct ? _calculateScore() : 0;
 
     final locale = _ref.read(localeProvider);
@@ -184,6 +188,7 @@ class FlagGameNotifier extends StateNotifier<FlagGameState> {
     state = state.copyWith(
       phase: FlagGamePhase.feedback,
       isCorrect: correct,
+      selectedCountryId: selectedId,
       results: newResults,
       isRunFinished: isLast,
     );

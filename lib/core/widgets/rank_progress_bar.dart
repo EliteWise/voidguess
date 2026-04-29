@@ -132,21 +132,21 @@ class _RankProgressBarState extends State<RankProgressBar> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                rankName.toUpperCase(),
+                rankName,
                 style: TextStyle(
                   color: rankColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
                 ),
               ),
               Text(
                 '$_displayedVP / $_vpPerRank VP',
                 style: TextStyle(
                   color: rankColor,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0,
                 ),
               ),
             ],
@@ -170,16 +170,6 @@ class _RankProgressBarState extends State<RankProgressBar> {
                     width: 0.5,
                   ),
                 ),
-                child: Center(
-                  child: Text(
-                    filled ? '■' : '_',
-                    style: TextStyle(
-                      color: filled ? AppTheme.background : AppTheme.textTertiary,
-                      fontSize: filled ? 10 : 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
               );
             }),
           ),
@@ -196,7 +186,7 @@ class _RankProgressBarState extends State<RankProgressBar> {
                   color: rankColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
+                  letterSpacing: 0,
                 ),
               ),
             ],

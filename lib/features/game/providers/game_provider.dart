@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../../core/provider/locale_provider.dart';
 import '../../../data/models/item.dart';
 import '../../../data/repositories/item_repository.dart'; // ← correct
 
@@ -10,10 +11,10 @@ extension RunModeExtension on RunMode {
   bool get isHardcore => name.endsWith('Hardcore');
   String get label {
     switch (this) {
-      case RunMode.quickNormal: return 'Quick — Normal';
-      case RunMode.quickHardcore: return 'Quick — Hardcore';
-      case RunMode.fullNormal: return 'Full — Normal';
-      case RunMode.fullHardcore: return 'Full — Hardcore';
+      case RunMode.quickNormal: return 'Quick - Normal';
+      case RunMode.quickHardcore: return 'Quick - Hardcore';
+      case RunMode.fullNormal: return 'Full - Normal';
+      case RunMode.fullHardcore: return 'Full - Hardcore';
     }
   }
 }
@@ -24,7 +25,7 @@ final itemRepositoryProvider = Provider<ItemRepository>((ref) {
 
 final gameProvider = StateNotifierProvider<GameNotifier, GameState>((ref) {
   final repository = ref.watch(itemRepositoryProvider);
-  return GameNotifier(repository);
+  return GameNotifier(repository, ref);
 });
 
 class ItemResult {
@@ -121,8 +122,9 @@ class GameState {
 
 class GameNotifier extends StateNotifier<GameState> {
   final ItemRepository _repository;
+  final Ref _ref;
 
-  GameNotifier(this._repository) : super(const GameState());
+  GameNotifier(this._repository, this._ref) : super(const GameState());
 
   Future<void> startRun({
     required RunMode mode,
@@ -142,7 +144,7 @@ class GameNotifier extends StateNotifier<GameState> {
   Future<void> _loadNextItem() async {
     state = state.copyWith(isLoading: true);
     final item = await _repository.getRandomItem(category: state.category);
-    final letters = _buildInitialLetters(item.name);
+    final letters = _buildInitialLetters(item.getName(_ref.read(localeProvider)));
     state = state.copyWith(
       currentItem: item,
       revealedLetters: letters,
@@ -165,7 +167,7 @@ class GameNotifier extends StateNotifier<GameState> {
 
   void revealNextLetter() {
     if (state.currentItem == null) return;
-    final name = state.currentItem!.name;
+    final name = state.currentItem!.getName(_ref.read(localeProvider));
     final letters = List<String>.from(state.revealedLetters);
 
     final hiddenIndexes = <int>[];
@@ -196,7 +198,7 @@ class GameNotifier extends StateNotifier<GameState> {
   void submitGuess(String guess) {
     if (state.currentItem == null) return;
     final correct = guess.trim().toLowerCase() ==
-        state.currentItem!.name.trim().toLowerCase();
+        state.currentItem!.getName(_ref.read(localeProvider)).trim().toLowerCase();
     if (correct) {
       _handleItemEnd(found: true);
     } else {
@@ -215,7 +217,7 @@ class GameNotifier extends StateNotifier<GameState> {
         .length;
 
     final result = ItemResult(
-      name: state.currentItem!.name,
+      name: state.currentItem!.getName(_ref.read(localeProvider)),
       score: score,
       timeSeconds: state.timeSeconds,
       found: found,
@@ -246,7 +248,7 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   int _calculateScore() {
-    final totalLetters = state.currentItem!.name
+    final totalLetters = state.currentItem!.getName(_ref.read(localeProvider))
         .split('')
         .where((c) => c != ' ')
         .length;

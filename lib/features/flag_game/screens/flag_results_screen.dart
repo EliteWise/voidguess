@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rank_progress_bar.dart';
+import '../../../core/widgets/result_stat.dart';
 import '../../../data/services/hive_service.dart';
 import '../providers/flag_game_provider.dart';
 
@@ -57,9 +58,9 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
       Clipboard.setData(ClipboardData(text: text));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
+          content: Text(
             'Result copied to clipboard!',
-            style: TextStyle(
+            style: AppTheme.inter(
               color: AppTheme.background,
               fontWeight: FontWeight.w600,
             ),
@@ -76,10 +77,10 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
 
   String get _runLabel {
     final ratio = widget.correctCount / widget.totalItems;
-    if (ratio == 1.0) return 'Perfect run.';
-    if (ratio >= 0.8) return 'Well played.';
-    if (ratio >= 0.5) return 'Not bad...';
-    return 'Rough one.';
+    if (ratio == 1.0) return 'Perfect!';
+    if (ratio >= 0.8) return 'Great job!';
+    if (ratio >= 0.5) return 'Good effort!';
+    return 'Keep practicing!';
   }
 
   Color get _runColor {
@@ -104,7 +105,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
               // ── Label run ───────────────────────────────────────────────
               Text(
                 _runLabel,
-                style: TextStyle(
+                style: AppTheme.inter(
                   color: _runColor,
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
@@ -113,12 +114,11 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'FLAGS',
-                style: TextStyle(
+                style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 11,
-                  letterSpacing: 3,
                   fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
@@ -151,7 +151,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _GlobalStat(
+                    ResultStat(
                       label: 'Avg time',
                       value: widget.results.isEmpty
                           ? '0'
@@ -160,14 +160,14 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                       color: _runColor,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
-                    _GlobalStat(
+                    ResultStat(
                       label: 'Correct',
                       value: '${widget.correctCount}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
-                    _GlobalStat(
+                    ResultStat(
                       label: 'Accuracy',
                       value: '${((widget.correctCount / widget.totalItems) * 100).round()}',
                       unit: '%',
@@ -180,12 +180,11 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
               const SizedBox(height: 32),
 
               // ── Breakdown ───────────────────────────────────────────────
-              const Text(
-                'BREAKDOWN',
-                style: TextStyle(
+              Text(
+                'Breakdown',
+                style: AppTheme.inter(
                   color: AppTheme.textSecondary,
-                  fontSize: 10,
-                  letterSpacing: 3,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -217,7 +216,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                         width: 20,
                         child: Text(
                           '${i + 1}',
-                          style: const TextStyle(
+                          style: AppTheme.inter(
                             color: AppTheme.textSecondary,
                             fontSize: 11,
                           ),
@@ -243,7 +242,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                       Expanded(
                         child: Text(
                           result.countryName,
-                          style: TextStyle(
+                          style: AppTheme.inter(
                             color: result.correct
                                 ? AppTheme.textPrimary
                                 : AppTheme.textSecondary,
@@ -256,7 +255,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                       // Temps
                       Text(
                         '${result.timeSeconds}s',
-                        style: const TextStyle(
+                        style: AppTheme.inter(
                           color: AppTheme.textSecondary,
                           fontSize: 11,
                         ),
@@ -279,10 +278,10 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                     color: AppTheme.primaryDeep,
                     borderRadius: AppTheme.cardRadius,
                   ),
-                  child: const Text(
+                  child: Text(
                     'Play again',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.background,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -305,10 +304,10 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                       width: 0.5,
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Share result',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -322,10 +321,10 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                 onTap: () => context.go('/'),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: const Text(
+                  child: Text(
                     'Home',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
                       letterSpacing: 0.5,
@@ -338,62 +337,6 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─── Widgets ─────────────────────────────────────────────────────────────────
-
-class _GlobalStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final Color color;
-
-  const _GlobalStat({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(width: 3),
-            Text(
-              unit,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
     );
   }
 }

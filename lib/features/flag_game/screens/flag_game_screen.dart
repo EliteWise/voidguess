@@ -107,7 +107,7 @@ class _FlagGameScreenState extends ConsumerState<FlagGameScreen> {
         elevation: 0,
         title: Text(
           '${state.currentItemIndex + 1} / ${state.totalItems}',
-          style: const TextStyle(
+          style: AppTheme.inter(
             color: AppTheme.textSecondary,
             fontSize: 13,
             letterSpacing: 1,
@@ -119,7 +119,7 @@ class _FlagGameScreenState extends ConsumerState<FlagGameScreen> {
           child: Center(
             child: Text(
               '${state.totalScore} pts',
-              style: const TextStyle(
+              style: AppTheme.inter(
                 color: AppTheme.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -134,7 +134,7 @@ class _FlagGameScreenState extends ConsumerState<FlagGameScreen> {
             child: Center(
               child: Text(
                 '${state.timeSeconds}s',
-                style: const TextStyle(
+                style: AppTheme.inter(
                   color: AppTheme.hint,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -153,7 +153,7 @@ class _FlagGameScreenState extends ConsumerState<FlagGameScreen> {
               // ── Nom du pays ─────────────────────────────────────────────
               Text(
                 state.correctCountry!.getName(locale).toUpperCase(),
-                style: const TextStyle(
+                style: AppTheme.inter(
                   color: AppTheme.textPrimary,
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -177,6 +177,7 @@ class _FlagGameScreenState extends ConsumerState<FlagGameScreen> {
                     country: country,
                     phase: state.phase,
                     correctCountry: state.correctCountry!,
+                    isSelected: country.id == state.selectedCountryId,
                     onTap: state.phase == FlagGamePhase.playing
                         ? () => _onAnswerSelected(country)
                         : null,
@@ -199,29 +200,23 @@ class _FlagOption extends StatelessWidget {
   final country;
   final FlagGamePhase phase;
   final correctCountry;
+  final bool isSelected;
   final VoidCallback? onTap;
 
   const _FlagOption({
     required this.country,
     required this.phase,
     required this.correctCountry,
+    required this.isSelected,
     this.onTap,
   });
 
-  Color _borderColor() {
-    if (phase != FlagGamePhase.feedback) return AppTheme.textTertiary;
-    if (country.id == correctCountry.id) return AppTheme.correct;
-    return AppTheme.wrong;
-  }
-
-  double _borderWidth() {
-    if (phase != FlagGamePhase.feedback) return 0.5;
-    if (country.id == correctCountry.id) return 2;
-    return 0.5;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isCorrect = country.id == correctCountry.id;
+    final showCorrect = phase == FlagGamePhase.feedback && isCorrect;
+    final showWrong = phase == FlagGamePhase.feedback && isSelected && !isCorrect;
+
     return Pressable(
       onTap: onTap,
       child: AnimatedContainer(
@@ -230,16 +225,37 @@ class _FlagOption extends StatelessWidget {
           color: AppTheme.surface,
           borderRadius: AppTheme.neutralRadius,
           border: Border.all(
-            color: _borderColor(),
-            width: _borderWidth(),
+            color: showCorrect
+                ? AppTheme.correct
+                : showWrong
+                ? AppTheme.wrong
+                : AppTheme.textTertiary,
+            width: (showCorrect || showWrong) ? 2 : 0.5,
           ),
         ),
         child: ClipRRect(
           borderRadius: AppTheme.neutralRadius,
-          child: SizedBox(
-            height: 60,
-            width: 90,
-            child: CountryFlag.fromCountryCode(country.code),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CountryFlag.fromCountryCode(country.code),
+              ),
+              if (showCorrect || showWrong)
+                Positioned.fill(
+                  child: Container(
+                    color: showCorrect
+                        ? AppTheme.correct.withOpacity(0.3)
+                        : AppTheme.wrong.withOpacity(0.3),
+                    child: Center(
+                      child: Icon(
+                        showCorrect ? Icons.check_rounded : Icons.close_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

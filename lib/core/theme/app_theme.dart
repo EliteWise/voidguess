@@ -22,31 +22,32 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF8888AA);
   static const Color textTertiary = Color(0xFF444458);
 
-  static TextTheme get _textTheme => GoogleFonts.dmMonoTextTheme().copyWith(
-    headlineLarge: GoogleFonts.dmMono(
+  static TextTheme get _textTheme => GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
+    headlineLarge: GoogleFonts.inter(
       color: textPrimary,
       fontSize: 32,
       fontWeight: FontWeight.w500,
       letterSpacing: -1,
     ),
-    headlineMedium: GoogleFonts.dmMono(
+    headlineMedium: GoogleFonts.inter(
       color: textPrimary,
       fontSize: 24,
       fontWeight: FontWeight.w500,
       letterSpacing: -0.5,
     ),
-    bodyLarge: GoogleFonts.dmMono(
+    bodyLarge: GoogleFonts.inter(
       color: textPrimary,
       fontSize: 16,
       fontWeight: FontWeight.w400,
     ),
-    bodyMedium: GoogleFonts.dmMono(
+    bodyMedium: GoogleFonts.inter(
       color: textSecondary,
       fontSize: 14,
     ),
   );
 
   static ThemeData get dark => ThemeData(
+    fontFamily: GoogleFonts.inter().fontFamily,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: background,
     primaryColor: primary,
@@ -60,7 +61,7 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
         foregroundColor: background,
-        textStyle: GoogleFonts.dmMono(
+        textStyle: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w500,
           letterSpacing: 1,
@@ -103,4 +104,18 @@ class AppTheme {
   );
 
   static const BorderRadius squareRadius = BorderRadius.zero;
+
+  static TextStyle inter({
+    Color color = textPrimary,
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w400,
+    double letterSpacing = 0,
+  }) {
+    return GoogleFonts.inter(
+      color: color,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+    );
+  }
 }
