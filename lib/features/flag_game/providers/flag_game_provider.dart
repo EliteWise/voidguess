@@ -15,6 +15,8 @@ final flagGameProvider = StateNotifierProvider<FlagGameNotifier, FlagGameState>(
   return FlagGameNotifier(repository, ref);
 });
 
+enum FlagRoundType { nameToFlag, flagToName }
+
 // ─── Result par item ────────────────────────────────────────────────────────
 
 class FlagItemResult {
@@ -72,6 +74,8 @@ class FlagGameState {
 
   // Nombre de bonnes réponses
   int get correctCount => results.where((r) => r.correct).length;
+
+  FlagRoundType get roundType => currentItemIndex % 2 == 0 ? FlagRoundType.nameToFlag : FlagRoundType.flagToName;
 
   FlagGameState copyWith({
     FlagGamePhase? phase,
@@ -212,3 +216,4 @@ class FlagGameNotifier extends StateNotifier<FlagGameState> {
     return 0;
   }
 }
+

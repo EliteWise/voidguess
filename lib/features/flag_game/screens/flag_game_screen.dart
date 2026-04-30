@@ -7,6 +7,7 @@ import 'package:http/http.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../data/models/country.dart';
 import '../providers/flag_game_provider.dart';
 
 class FlagGameScreen extends ConsumerStatefulWidget {
@@ -150,41 +151,71 @@ class _FlagGameScreenState extends ConsumerState<FlagGameScreen> {
           child: Column(
             children: [
               const Spacer(),
-              // ── Nom du pays ─────────────────────────────────────────────
-              Text(
-                state.correctCountry!.getName(locale).toUpperCase(),
-                style: AppTheme.inter(
-                  color: AppTheme.textPrimary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+              if (state.roundType == FlagRoundType.nameToFlag) ...[
+                // ── Nom du pays ─────────────────────────────────────────────
+                Text(
+                  state.correctCountry!.getName(locale).toUpperCase(),
+                  style: AppTheme.inter(
+                    color: AppTheme.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
 
-              const SizedBox(height: 48),
+                const SizedBox(height: 48),
 
-              // ── Grille 2x3 de drapeaux ──────────────────────────────────
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.5,
-                physics: const NeverScrollableScrollPhysics(),
-                children: state.options.map((country) {
-                  return _FlagOption(
-                    country: country,
-                    phase: state.phase,
-                    correctCountry: state.correctCountry!,
-                    isSelected: country.id == state.selectedCountryId,
-                    onTap: state.phase == FlagGamePhase.playing
-                        ? () => _onAnswerSelected(country)
-                        : null,
-                  );
-                }).toList(),
-              ),
-
+                GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.5,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: state.options.map((country) {
+                    return _FlagOption(
+                      country: country,
+                      phase: state.phase,
+                      correctCountry: state.correctCountry!,
+                      isSelected: country.id == state.selectedCountryId,
+                      onTap: state.phase == FlagGamePhase.playing
+                          ? () => _onAnswerSelected(country)
+                          : null,
+                    );
+                  }).toList(),
+                ),
+              ] else ... [
+                ClipRRect(
+                  borderRadius: AppTheme.neutralRadius,
+                  child: SizedBox(
+                    width: 160,
+                    height: 107,
+                    child: CountryFlag.fromCountryCode(state.correctCountry!.code),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 2.2,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: state.options.map((country) {
+                    return _NameOption(
+                      country: country,
+                      locale: locale,
+                      phase: state.phase,
+                      correctCountry: state.correctCountry!,
+                      isSelected: country.id == state.selectedCountryId,
+                      onTap: state.phase == FlagGamePhase.playing
+                          ? () => _onAnswerSelected(country)
+                          : null,
+                    );
+                  }).toList(),
+                ),
+              ],
               const Spacer(),
             ],
           ),
@@ -257,6 +288,68 @@ class _FlagOption extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NameOption extends StatelessWidget {
+  final Country country;
+  final String locale;
+  final FlagGamePhase phase;
+  final Country correctCountry;
+  final bool isSelected;
+  final VoidCallback? onTap;
+
+  const _NameOption({
+    required this.country,
+    required this.locale,
+    required this.phase,
+    required this.correctCountry,
+    required this.isSelected,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCorrect = country.id == correctCountry.id;
+    final showCorrect = phase == FlagGamePhase.feedback && isCorrect;
+    final showWrong = phase == FlagGamePhase.feedback && isSelected && !isCorrect;
+
+    return Pressable(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: showCorrect
+              ? AppTheme.correct.withOpacity(0.1)
+              : showWrong
+              ? AppTheme.wrong.withOpacity(0.1)
+              : AppTheme.surface,
+          borderRadius: AppTheme.neutralRadius,
+          border: Border.all(
+            color: showCorrect
+                ? AppTheme.correct
+                : showWrong
+                ? AppTheme.wrong
+                : AppTheme.textTertiary,
+            width: (showCorrect || showWrong) ? 2 : 0.5,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          country.getName(locale),
+          style: AppTheme.inter(
+            color: showCorrect
+                ? AppTheme.correct
+                : showWrong
+                ? AppTheme.wrong
+                : AppTheme.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
         ),
       ),
     );
