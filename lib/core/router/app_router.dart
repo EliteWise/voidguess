@@ -1,5 +1,10 @@
 import 'package:go_router/go_router.dart';
 import '../../features/achievements/screens/stats_screen.dart';
+import '../../features/duel/screens/duel_countdown_screen.dart';
+import '../../features/duel/screens/duel_game_screen.dart';
+import '../../features/duel/screens/duel_lobby_screen.dart';
+import '../../features/duel/screens/duel_menu_screen.dart';
+import '../../features/duel/screens/duel_results_screen.dart';
 import '../../features/flag_game/providers/flag_game_provider.dart';
 import '../../features/flag_game/screens/flag_game_screen.dart';
 import '../../features/flag_game/screens/flag_results_screen.dart';
@@ -60,6 +65,26 @@ final appRouter = GoRouter(
           totalItems: extra['totalItems'] as int? ?? 0,
         );
       },
+    ),
+    GoRoute(
+      path: '/duel',
+      builder: (context, state) => const DuelMenuScreen(),
+    ),
+    GoRoute(
+      path: '/duel/lobby',
+      builder: (context, state) => const DuelLobbyScreen(),
+    ),
+    GoRoute(
+      path: '/duel/countdown',
+      builder: (context, state) => const DuelCountdownScreen(),
+    ),
+    GoRoute(
+      path: '/duel/game',
+      builder: (context, state) => const DuelGameScreen(),
+    ),
+    GoRoute(
+      path: '/duel/results',
+      builder: (context, state) => const DuelResultsScreen(),
     ),
   ],
 );

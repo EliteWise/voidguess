@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:voidguess/core/widgets/floating_letters.dart';
 import 'core/provider/locale_provider.dart';
 import 'core/router/app_router.dart';
@@ -10,6 +10,12 @@ import 'data/services/hive_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://pitngeebnzrctkixbsla.supabase.co',
+    anonKey: 'sb_publishable_8-9a46AwyDiYa1Pw9Lrz0Q_qNh4T9sS',
+  );
+
   await HiveService().init();
   final savedLocale = Hive.box('stats').get('locale', defaultValue: 'fr');
   runApp(

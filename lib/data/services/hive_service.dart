@@ -333,4 +333,13 @@ class HiveService {
       }
     }
   }
+
+  // Player Infos
+  String getPlayerName() {
+    return Hive.box('stats').get('playerName', defaultValue: '') as String;
+  }
+
+  Future<void> setPlayerName(String name) async {
+    await Hive.box('stats').put('playerName', name);
+  }
 }

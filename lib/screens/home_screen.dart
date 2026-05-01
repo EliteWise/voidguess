@@ -26,6 +26,127 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _loadRank();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkPlayerName());
+  }
+
+  void _checkPlayerName() {
+    final name = HiveService().getPlayerName();
+    if (name.isEmpty) {
+      _showNameDialog();
+    }
+  }
+
+  void _showNameDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.neutralRadius),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Choose a name',
+                style: AppTheme.inter(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'This will be shown to opponents',
+                style: AppTheme.inter(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                maxLength: 16,
+                style: AppTheme.inter(
+                  color: AppTheme.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Enter your name',
+                  hintStyle: AppTheme.inter(
+                    color: AppTheme.textTertiary,
+                    fontSize: 15,
+                  ),
+                  counterText: '',
+                  filled: true,
+                  fillColor: AppTheme.background,
+                  border: OutlineInputBorder(
+                    borderRadius: AppTheme.inputRadius,
+                    borderSide: const BorderSide(
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: AppTheme.inputRadius,
+                    borderSide: const BorderSide(
+                      color: AppTheme.textTertiary,
+                      width: 0.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: AppTheme.inputRadius,
+                    borderSide: const BorderSide(
+                      color: AppTheme.primary,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                onSubmitted: (_) {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    HiveService().setPlayerName(name);
+                    Navigator.of(dialogContext).pop();
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+              Pressable(
+                onTap: () {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    HiveService().setPlayerName(name);
+                    Navigator.of(dialogContext).pop();
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryDeep,
+                    borderRadius: AppTheme.cardRadius,
+                  ),
+                  child: Text(
+                    'Continue',
+                    textAlign: TextAlign.center,
+                    style: AppTheme.inter(
+                      color: AppTheme.background,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _loadRank() {
@@ -64,6 +185,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Hive.box('stats').put('locale', newLocale);
   }
 
+  void _showFlagSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const _FlagSheet(),
+    ).then((_) => _loadRank());
+  }
+
   @override
   Widget build(BuildContext context) {
     final rankName = HiveService.rankNames[_rankIndex];
@@ -72,6 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final locale = ref.watch(localeProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -124,8 +257,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _CategoryButton(
                 label: 'Flags',
                 icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
-                subtitle: '10 flags · Ranked',
-                onTap: () => context.go('/flag_game'),
+                subtitle: 'Solo · 1v1',
+                onTap: () => _showFlagSheet(context),
               ),
               const Spacer(),
               Padding(
@@ -634,6 +767,159 @@ class _ModeCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FlagSheet extends StatelessWidget {
+  const _FlagSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 32,
+              height: 3,
+              decoration: BoxDecoration(
+                color: AppTheme.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Flags',
+            style: AppTheme.inter(
+              color: AppTheme.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Pressable(
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/flag_game');
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: AppTheme.chipRadius,
+                border: Border.all(
+                  color: AppTheme.textTertiary,
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Solo',
+                          style: AppTheme.inter(
+                            color: AppTheme.primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '10 flags · Ranked',
+                          style: AppTheme.inter(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        PhosphorIcons.shield(PhosphorIconsStyle.fill),
+                        color: AppTheme.primary.withOpacity(0.4),
+                        size: 10,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        'RANKED',
+                        style: AppTheme.inter(
+                          color: AppTheme.primary.withOpacity(0.4),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Pressable(
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/duel');
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: AppTheme.chipRadius,
+                border: Border.all(
+                  color: AppTheme.primaryDeep.withOpacity(0.3),
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '1v1',
+                          style: AppTheme.inter(
+                            color: AppTheme.primaryDeep,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '10 flags · Challenge a friend',
+                          style: AppTheme.inter(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    PhosphorIcons.sword(PhosphorIconsStyle.regular),
+                    color: AppTheme.primaryDeep.withOpacity(0.5),
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
