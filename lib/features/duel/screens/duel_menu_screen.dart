@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../data/services/hive_service.dart';
@@ -40,7 +41,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
   Future<void> _joinRoom() async {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) {
-      setState(() => _error = 'Enter a room code');
+      setState(() => _error = ref.tr('enter_code'));
       return;
     }
 
@@ -59,7 +60,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
     } else {
       setState(() {
         _isJoining = false;
-        _error = 'Room not found or full';
+        _error = ref.tr('room_not_found');
       });
     }
   }
@@ -80,7 +81,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                 child: Pressable(
                   onTap: () => context.go('/'),
                   child: Text(
-                    '← Back',
+                    ref.tr('back'),
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
@@ -103,7 +104,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Flags',
+                ref.tr('flags'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 14,
@@ -123,7 +124,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                     borderRadius: AppTheme.cardRadius,
                   ),
                   child: Text(
-                    'Create room',
+                    ref.tr('create_room'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.background,
@@ -143,7 +144,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'or',
+                      ref.tr('or'),
                       style: AppTheme.inter(
                         color: AppTheme.textSecondary,
                         fontSize: 12,
@@ -227,7 +228,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                     ),
                   ),
                   child: Text(
-                    _isJoining ? 'Joining...' : 'Join room',
+                    _isJoining ? ref.tr('joining') : ref.tr('join_room'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,

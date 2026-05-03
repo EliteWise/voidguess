@@ -5,6 +5,7 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
 import '../../../core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
@@ -102,7 +103,7 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Waiting for opponent to finish...',
+                ref.tr('waiting_finish'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 14,

@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/l10n/l10n.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
-import '../../../core/widgets/result_stat.dart';
 import '../providers/duel_provider.dart';
 
 class DuelResultsScreen extends ConsumerWidget {
@@ -37,13 +37,13 @@ class DuelResultsScreen extends ConsumerWidget {
     String resultLabel;
     Color resultColor;
     if (isDraw) {
-      resultLabel = 'Draw!';
+      resultLabel = ref.tr('draw');
       resultColor = AppTheme.hint;
     } else if (iWon) {
-      resultLabel = 'You win!';
+      resultLabel = ref.tr('you_win');
       resultColor = AppTheme.correct;
     } else {
-      resultLabel = 'You lose!';
+      resultLabel = ref.tr('you_lose');
       resultColor = AppTheme.wrong;
     }
 
@@ -69,7 +69,7 @@ class DuelResultsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '1v1 Flags',
+                ref.tr('duel_flags'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 13,
@@ -126,7 +126,7 @@ class DuelResultsScreen extends ConsumerWidget {
 
                     // Correct
                     _CompareRow(
-                      label: 'Correct',
+                      label: ref.tr('correct'),
                       myValue: '$meCorrect / ${state.totalRounds}',
                       oppValue: '$oppCorrect / ${state.totalRounds}',
                       myWins: meCorrect > oppCorrect,
@@ -136,7 +136,7 @@ class DuelResultsScreen extends ConsumerWidget {
 
                     // Avg time
                     _CompareRow(
-                      label: 'Avg time',
+                      label: ref.tr('avg_time'),
                       myValue: '${me.avgTime.toStringAsFixed(1)}s',
                       oppValue: '${opp.avgTime.toStringAsFixed(1)}s',
                       myWins: me.avgTime < opp.avgTime,
@@ -146,7 +146,7 @@ class DuelResultsScreen extends ConsumerWidget {
 
                     // Accuracy
                     _CompareRow(
-                      label: 'Accuracy',
+                      label: ref.tr('accuracy'),
                       myValue: '${((meCorrect / state.totalRounds) * 100).round()}%',
                       oppValue: '${((oppCorrect / state.totalRounds) * 100).round()}%',
                       myWins: meCorrect > oppCorrect,
@@ -172,7 +172,7 @@ class DuelResultsScreen extends ConsumerWidget {
                     borderRadius: AppTheme.cardRadius,
                   ),
                   child: Text(
-                    'Play again',
+                    ref.tr('play_again'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.background,
@@ -193,7 +193,7 @@ class DuelResultsScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Text(
-                    'Home',
+                    ref.tr('home'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,

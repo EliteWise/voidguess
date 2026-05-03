@@ -296,12 +296,17 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
         case 'playing':
           if (state.phase == DuelPhase.countdown) {
-            await _loadOptions();
+            // On passe en playing AVANT l'await pour éviter la ré-entrance :
+            // Supabase peut envoyer plusieurs events quasi-simultanés lors de la
+            // transition countdown→playing. Sans ça, deux listeners async voient
+            // tous les deux phase==countdown et appellent _loadOptions() en parallèle,
+            // ce qui corrompt le state (options/me/opponent écrasés avec des données stale).
             state = state.copyWith(
               phase: DuelPhase.playing,
               me: updatedMe,
               opponent: opponent,
             );
+            await _loadOptions();
           } else {
             state = state.copyWith(opponent: opponent);
           }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../../core/l10n/l10n.dart';
 import '../../../core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
@@ -111,12 +112,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         found: found,
         current: state.currentItemIndex + 1,
         total: state.totalItems,
+        category: state.category,
+        foundLabel: ref.tr('found'),
+        missedLabel: ref.tr('missed'),
+        scoreLabel: ref.tr('score'),
+        timeLabel: ref.tr('time'),
+        categoryLabel: state.category == 'game' ? ref.tr('game_label') : ref.tr('film_label'),
+        nextLabel: ref.tr('next'),
         onNext: () {
           Navigator.of(context).pop();
           ref.read(gameProvider.notifier).nextItem().then((_) {
             _startTimers();
           });
-        }, category: state.category,
+        },
       ),
     );
   }
@@ -207,7 +215,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     ),
                   ),
                   child: Text(
-                    'HARDCORE',
+                    ref.tr('hardcore'),
                     style: AppTheme.inter(
                       color: AppTheme.wrong,
                       fontSize: 10,
@@ -225,7 +233,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   fontSize: 15,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Guess the title...',
+                  hintText: ref.tr('guess_title'),
                   hintStyle: AppTheme.inter(
                     color: AppTheme.textSecondary,
                     fontSize: 14,
@@ -310,7 +318,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Hint  ·  year + keyword  (score ÷2)',
+                          ref.tr('hint_label'),
                           style: AppTheme.inter(
                             color: AppTheme.hint,
                             fontSize: 12,
@@ -338,6 +346,12 @@ class _ItemRecapDialog extends StatelessWidget {
   final int total;
   final VoidCallback onNext;
   final String category;
+  final String foundLabel;
+  final String missedLabel;
+  final String scoreLabel;
+  final String timeLabel;
+  final String categoryLabel;
+  final String nextLabel;
 
   const _ItemRecapDialog({
     required this.itemName,
@@ -347,7 +361,13 @@ class _ItemRecapDialog extends StatelessWidget {
     required this.current,
     required this.total,
     required this.onNext,
-    required this.category
+    required this.category,
+    required this.foundLabel,
+    required this.missedLabel,
+    required this.scoreLabel,
+    required this.timeLabel,
+    required this.categoryLabel,
+    required this.nextLabel,
   });
 
   @override

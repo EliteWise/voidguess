@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../providers/duel_provider.dart';
@@ -45,7 +46,7 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                     context.go('/duel');
                   },
                   child: Text(
-                    '← Leave',
+                    ref.tr('leave'),
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
@@ -58,7 +59,7 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 
               // ── Room code ─────────────────────────────────────────────
               Text(
-                'Room code',
+                ref.tr('room_code'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 12,
@@ -71,7 +72,7 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Code copied!',
+                        ref.tr('code_copied'),
                         style: AppTheme.inter(
                           color: AppTheme.background,
                           fontWeight: FontWeight.w600,
@@ -95,7 +96,7 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Tap to copy',
+                ref.tr('tap_to_copy'),
                 style: AppTheme.inter(
                   color: AppTheme.textTertiary,
                   fontSize: 11,
@@ -109,12 +110,14 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                 label: state.me?.name ?? 'You',
                 ready: state.me?.ready ?? false,
                 isMe: true,
+                  youLabel: ref.tr('you')
               ),
               const SizedBox(height: 12),
               state.opponentJoined
                   ? _PlayerRow(
                 label: state.opponent!.name,
                 ready: state.opponent!.ready,
+                youLabel: ref.tr('you'),
                 isMe: false,
               )
                   : Container(
@@ -129,7 +132,7 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                   ),
                 ),
                 child: Text(
-                  'Waiting for opponent...',
+                  ref.tr('waiting_opponent'),
                   textAlign: TextAlign.center,
                   style: AppTheme.inter(
                     color: AppTheme.textTertiary,
@@ -154,7 +157,7 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                       borderRadius: AppTheme.cardRadius,
                     ),
                     child: Text(
-                      (state.me?.ready ?? false) ? 'Ready!' : 'Ready',
+                      (state.me?.ready ?? false) ? ref.tr('ready_done') : ref.tr('ready'),
                       textAlign: TextAlign.center,
                       style: AppTheme.inter(
                         color: AppTheme.background,
@@ -178,11 +181,13 @@ class _PlayerRow extends StatelessWidget {
   final String label;
   final bool ready;
   final bool isMe;
+  final String youLabel;
 
   const _PlayerRow({
     required this.label,
     required this.ready,
     required this.isMe,
+    required this.youLabel,
   });
 
   @override
@@ -211,7 +216,7 @@ class _PlayerRow extends StatelessWidget {
           if (isMe) ...[
             const SizedBox(width: 6),
             Text(
-              '(you)',
+              youLabel,
               style: AppTheme.inter(
                 color: AppTheme.textTertiary,
                 fontSize: 12,

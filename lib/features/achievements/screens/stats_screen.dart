@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:voidguess/core/l10n/app_strings.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
+import 'package:voidguess/core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/services/hive_service.dart';
 import '../../../data/repositories/achievement_repository.dart';
 
-class StatsScreen extends StatefulWidget {
+class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
 
   @override
-  State<StatsScreen> createState() => _StatsScreenState();
+  ConsumerState<StatsScreen> createState() => _StatsScreenState();
 }
 
-class _StatsScreenState extends State<StatsScreen> {
+class _StatsScreenState extends ConsumerState<StatsScreen> {
   int _selectedIndex = 0;
 
   @override
@@ -27,7 +31,7 @@ class _StatsScreenState extends State<StatsScreen> {
           onPressed: () => context.go('/'),
         ),
         title: Text(
-          'Stats & Achievements',
+          ref.tr('stats_achievements'),
           style: AppTheme.inter(
             color: AppTheme.textPrimary,
             fontSize: 15,
@@ -53,12 +57,12 @@ class _StatsScreenState extends State<StatsScreen> {
               child: Row(
                 children: [
                   _TabPill(
-                    label: 'Stats',
+                    label: ref.tr('stats_label'),
                     selected: _selectedIndex == 0,
                     onTap: () => setState(() => _selectedIndex = 0),
                   ),
                   _TabPill(
-                    label: 'Achievements',
+                    label: ref.tr('achievements_label'),
                     selected: _selectedIndex == 1,
                     onTap: () => setState(() => _selectedIndex = 1),
                   ),
@@ -122,11 +126,61 @@ class _TabPill extends StatelessWidget {
   }
 }
 
-class _StatsTab extends StatelessWidget {
+class _StatsTab extends ConsumerWidget {
   const _StatsTab();
 
+  Future<void> _confirmResetRank(BuildContext context, WidgetRef ref) async {
+    final locale = ref.read(localeProvider);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.neutralRadius),
+        title: Text(
+          AppStrings.get('reset_rank_title', locale),
+          style: AppTheme.inter(
+            color: AppTheme.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          AppStrings.get('reset_rank_desc', locale),
+          style: AppTheme.inter(
+            color: AppTheme.textSecondary,
+            fontSize: 13,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              AppStrings.get('cancel', locale),
+              style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              AppStrings.get('reset', locale),
+              style: AppTheme.inter(
+                color: AppTheme.wrong,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await HiveService().resetRank();
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final hive = HiveService();
     final bestRun = hive.getBestRun();
     final totalRuns = hive.getTotalRuns();
@@ -140,7 +194,7 @@ class _StatsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Best run',
+            ref.tr('best_run'),
             style: AppTheme.inter(
               color: AppTheme.textSecondary,
               fontSize: 12,
@@ -160,7 +214,7 @@ class _StatsTab extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'No runs completed yet.',
+                ref.tr('no_runs'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 13,
@@ -185,7 +239,7 @@ class _StatsTab extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _StatCard(
-                        label: 'Score',
+                        label: ref.tr('score'),
                         value: '${bestRun['totalScore']}',
                         unit: 'pts',
                         color: AppTheme.primary,
@@ -196,7 +250,7 @@ class _StatsTab extends StatelessWidget {
                         color: AppTheme.textTertiary,
                       ),
                       _StatCard(
-                        label: 'Found',
+                        label: ref.tr('found_label'),
                         value: '${bestRun['itemsFound']}',
                         unit: '/ ${bestRun['totalItems']}',
                         color: AppTheme.correct,
@@ -207,7 +261,7 @@ class _StatsTab extends StatelessWidget {
                         color: AppTheme.textTertiary,
                       ),
                       _StatCard(
-                        label: 'Avg time',
+                        label: ref.tr('avg_time'),
                         value: '${bestRun['avgTime']}',
                         unit: 's',
                         color: AppTheme.hint,
@@ -239,7 +293,7 @@ class _StatsTab extends StatelessWidget {
 
           const SizedBox(height: 32),
           Text(
-            'Global',
+            ref.tr('global'),
             style: AppTheme.inter(
               color: AppTheme.textSecondary,
               fontSize: 12,
@@ -251,14 +305,14 @@ class _StatsTab extends StatelessWidget {
             children: [
               Expanded(
                 child: _GlobalCard(
-                  label: 'Runs played',
+                  label: ref.tr('runs_played'),
                   value: '$totalRuns',
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _GlobalCard(
-                  label: 'Success rate',
+                  label: ref.tr('success_rate'),
                   value: successRate.toStringAsFixed(0),
                   unit: '%',
                 ),
@@ -270,7 +324,7 @@ class _StatsTab extends StatelessWidget {
             children: [
               Expanded(
                 child: _GlobalCard(
-                  label: 'Best score',
+                  label: ref.tr('best_score'),
                   value: '$bestScore',
                   unit: 'pts',
                 ),
@@ -278,13 +332,38 @@ class _StatsTab extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _GlobalCard(
-                  label: 'Best avg time',
+                  label: ref.tr('best_avg_time'),
                   value: bestAvgTime == 9999 ? '--' : '$bestAvgTime',
                   unit: bestAvgTime == 9999 ? null : 's',
                 ),
               ),
             ],
           ),
+
+          const SizedBox(height: 40),
+          GestureDetector(
+            onTap: () => _confirmResetRank(context, ref),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: AppTheme.neutralRadius,
+                border: Border.all(
+                  color: AppTheme.wrong.withOpacity(0.3),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                ref.tr('reset_rank'),
+                textAlign: TextAlign.center,
+                style: AppTheme.inter(
+                  color: AppTheme.wrong,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -410,14 +489,14 @@ class _GlobalCard extends StatelessWidget {
   }
 }
 
-class _AchievementsTab extends StatefulWidget {
+class _AchievementsTab extends ConsumerStatefulWidget {
   const _AchievementsTab();
 
   @override
-  State<_AchievementsTab> createState() => _AchievementsTabState();
+  ConsumerState<_AchievementsTab> createState() => _AchievementsTabState();
 }
 
-class _AchievementsTabState extends State<_AchievementsTab> {
+class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
   final _repo = AchievementRepository();
   List<Achievement> _achievements = [];
   List<String> _unlocked = [];
@@ -446,6 +525,15 @@ class _AchievementsTabState extends State<_AchievementsTab> {
     }
     return achievement.description;
   }
+
+  static const _categoryKeys = {
+    'speed': 'cat_speed',
+    'precision': 'cat_precision',
+    'runs': 'cat_runs',
+    'score': 'cat_score',
+    'categories': 'cat_categories',
+    'secret': 'cat_secret',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -482,7 +570,7 @@ class _AchievementsTabState extends State<_AchievementsTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${cat[0].toUpperCase()}${cat.substring(1)}',
+                    ref.tr(_categoryKeys[cat]!),
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,
                       fontSize: 12,
@@ -542,7 +630,7 @@ class _AchievementsTabState extends State<_AchievementsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            achievement.title,
+                            achievement.title,  // TODO: multilingue via achievements.json
                             style: AppTheme.inter(
                               color: isUnlocked
                                   ? AppTheme.textPrimary
@@ -556,7 +644,7 @@ class _AchievementsTabState extends State<_AchievementsTab> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _getDescription(achievement, isUnlocked),
+                            _getDescription(achievement, isUnlocked),  // TODO: multilingue
                             style: AppTheme.inter(
                               color: isUnlocked
                                   ? AppTheme.textSecondary

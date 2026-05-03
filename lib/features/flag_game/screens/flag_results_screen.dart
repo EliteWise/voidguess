@@ -2,8 +2,12 @@ import 'dart:io';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:voidguess/core/l10n/app_strings.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
+import 'package:voidguess/core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rank_progress_bar.dart';
@@ -11,7 +15,7 @@ import '../../../core/widgets/result_stat.dart';
 import '../../../data/services/hive_service.dart';
 import '../providers/flag_game_provider.dart';
 
-class FlagResultsScreen extends StatefulWidget {
+class FlagResultsScreen extends ConsumerStatefulWidget {
   final List<FlagItemResult> results;
   final int totalScore;
   final int correctCount;
@@ -26,10 +30,10 @@ class FlagResultsScreen extends StatefulWidget {
   });
 
   @override
-  State<FlagResultsScreen> createState() => _FlagResultsScreenState();
+  ConsumerState<FlagResultsScreen> createState() => _FlagResultsScreenState();
 }
 
-class _FlagResultsScreenState extends State<FlagResultsScreen> {
+class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
   int _vpGained = 0;
   int _rankIndexBefore = 0;
 
@@ -52,14 +56,18 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
   }
 
   void _share() {
-    final text =
-        'Void Flags — ${widget.correctCount}/${widget.totalItems} correct · ${widget.totalScore} pts! Can you do better?';
+    final locale = ref.read(localeProvider);
+    final text = AppStrings.format('share_flags', locale, {
+      'correct': '${widget.correctCount}',
+      'total': '${widget.totalItems}',
+      'score': '${widget.totalScore}',
+    });
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       Clipboard.setData(ClipboardData(text: text));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Result copied to clipboard!',
+            AppStrings.get('result_copied', locale),
             style: AppTheme.inter(
               color: AppTheme.background,
               fontWeight: FontWeight.w600,
@@ -75,12 +83,12 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
     }
   }
 
-  String get _runLabel {
+  String get _runLabelKey {
     final ratio = widget.correctCount / widget.totalItems;
-    if (ratio == 1.0) return 'Perfect!';
-    if (ratio >= 0.8) return 'Great job!';
-    if (ratio >= 0.5) return 'Good effort!';
-    return 'Keep practicing!';
+    if (ratio == 1.0) return 'perfect';
+    if (ratio >= 0.8) return 'great_job';
+    if (ratio >= 0.5) return 'good_effort';
+    return 'keep_practicing';
   }
 
   Color get _runColor {
@@ -104,7 +112,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
 
               // ── Label run ───────────────────────────────────────────────
               Text(
-                _runLabel,
+                ref.tr(_runLabelKey),
                 style: AppTheme.inter(
                   color: _runColor,
                   fontSize: 36,
@@ -115,7 +123,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'FLAGS',
+                ref.tr('flags'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 11,
@@ -152,7 +160,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ResultStat(
-                      label: 'Avg time',
+                      label: ref.tr('avg_time'),
                       value: widget.results.isEmpty
                           ? '0'
                           : '${(widget.results.fold<int>(0, (s, r) => s + r.timeSeconds) ~/ widget.results.length)}',
@@ -161,14 +169,14 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
                     ResultStat(
-                      label: 'Correct',
+                      label: ref.tr('correct'),
                       value: '${widget.correctCount}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
                     ResultStat(
-                      label: 'Accuracy',
+                      label: ref.tr('accuracy'),
                       value: '${((widget.correctCount / widget.totalItems) * 100).round()}',
                       unit: '%',
                       color: AppTheme.hint,
@@ -181,7 +189,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
 
               // ── Breakdown ───────────────────────────────────────────────
               Text(
-                'Breakdown',
+                ref.tr('breakdown'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 12,
@@ -230,10 +238,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                         child: SizedBox(
                           width: 36,
                           height: 24,
-                          child: CountryFlag.fromCountryCode(
-                            // Récupère le code depuis le nom — à améliorer
-                            result.countryCode
-                          ),
+                          child: CountryFlag.fromCountryCode(result.countryCode),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -279,7 +284,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                     borderRadius: AppTheme.cardRadius,
                   ),
                   child: Text(
-                    'Play again',
+                    ref.tr('play_again'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.background,
@@ -305,7 +310,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                     ),
                   ),
                   child: Text(
-                    'Share result',
+                    ref.tr('share_result'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,
@@ -322,7 +327,7 @@ class _FlagResultsScreenState extends State<FlagResultsScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Text(
-                    'Home',
+                    ref.tr('home'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,

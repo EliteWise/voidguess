@@ -1,8 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:voidguess/core/l10n/app_strings.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
+import 'package:voidguess/core/provider/locale_provider.dart';
 import 'package:voidguess/core/widgets/result_stat.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
@@ -10,7 +14,7 @@ import '../../../core/widgets/rank_progress_bar.dart';
 import '../../../data/services/hive_service.dart';
 import '../../game/providers/game_provider.dart';
 
-class ResultsScreen extends StatefulWidget {
+class ResultsScreen extends ConsumerStatefulWidget {
   final List<ItemResult> itemResults;
   final int totalScore;
   final int itemsFound;
@@ -31,12 +35,13 @@ class ResultsScreen extends StatefulWidget {
   });
 
   @override
-  State<ResultsScreen> createState() => _ResultsScreenState();
+  ConsumerState<ResultsScreen> createState() => _ResultsScreenState();
 }
 
-class _ResultsScreenState extends State<ResultsScreen> {
+class _ResultsScreenState extends ConsumerState<ResultsScreen> {
   int _vpGained = 0;
   int _rankIndexBefore = 0;
+  int _vpInRankBefore = 0;
 
   @override
   void initState() {
@@ -80,25 +85,32 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     if (widget.totalItems == 10) {
       final rankIndexBefore = HiveService().getCurrentRankIndex();
+      final vpInRankBefore = HiveService().getVPInCurrentRank();
       final vp = await HiveService().updateRank(
           widget.totalScore, widget.mode.isHardcore);
       setState(() {
         _vpGained = vp;
         _rankIndexBefore = rankIndexBefore;
+        _vpInRankBefore = vpInRankBefore;
       });
     }
   }
 
   void _share() {
-    final text =
-        'Void Guess · ${widget.mode.label} · ${widget.itemsFound}/${widget.totalItems} found · ${widget.totalScore} pts! Can you do better?';
+    final locale = ref.read(localeProvider);
+    final text = AppStrings.format('share_guess', locale, {
+      'mode': widget.mode.label,
+      'found': '${widget.itemsFound}',
+      'total': '${widget.totalItems}',
+      'score': '${widget.totalScore}',
+    });
 
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       Clipboard.setData(ClipboardData(text: text));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Result copied to clipboard!',
+            AppStrings.get('result_copied', locale),
             style: AppTheme.inter(
               color: AppTheme.background,
               fontWeight: FontWeight.w600,
@@ -114,12 +126,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
     }
   }
 
-  String get _runLabel {
-    if (widget.isHardcoreFail) return 'Game over!';
-    if (widget.itemsFound == widget.totalItems) return 'Perfect!';
-    if (widget.itemsFound >= widget.totalItems * 0.7) return 'Great job!';
-    if (widget.itemsFound >= widget.totalItems * 0.4) return 'Good effort!';
-    return 'Keep practicing!';
+  String get _runLabelKey {
+    if (widget.isHardcoreFail) return 'game_over';
+    if (widget.itemsFound == widget.totalItems) return 'perfect';
+    if (widget.itemsFound >= widget.totalItems * 0.7) return 'great_job';
+    if (widget.itemsFound >= widget.totalItems * 0.4) return 'good_effort';
+    return 'keep_practicing';
   }
 
   Color get _runColor {
@@ -143,7 +155,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
               // ── Label run ────────────────────────────────────────────────
               Text(
-                _runLabel,
+                ref.tr(_runLabelKey),
                 style: AppTheme.inter(
                   color: _runColor,
                   fontSize: 36,
@@ -167,7 +179,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               if (widget.totalItems == 10 && _vpGained != 0) ...[
                 const SizedBox(height: 24),
                 RankProgressBar(
-                  vpBefore: HiveService().getVPInCurrentRank() - _vpGained,
+                  vpBefore: _vpInRankBefore,
                   vpGained: _vpGained,
                   rankIndexBefore: _rankIndexBefore,
                   rankIndexAfter: HiveService().getCurrentRankIndex(),
@@ -191,21 +203,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ResultStat(
-                      label: 'Score',
+                      label: ref.tr('score'),
                       value: '${widget.totalScore}',
                       unit: 'pts',
                       color: _runColor,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
                     ResultStat(
-                      label: 'Found',
+                      label: ref.tr('found_label'),
                       value: '${widget.itemsFound}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
                     Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
                     ResultStat(
-                      label: 'Avg time',
+                      label: ref.tr('avg_time'),
                       value: widget.itemResults.isEmpty
                           ? '0'
                           : '${widget.itemResults.fold<int>(0, (s, r) => s + r.timeSeconds) ~/ widget.itemResults.length}',
@@ -220,7 +232,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
               // ── Breakdown ────────────────────────────────────────────────
               Text(
-                'Breakdown',
+                ref.tr('breakdown'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 12,
@@ -312,7 +324,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     borderRadius: AppTheme.cardRadius,
                   ),
                   child: Text(
-                    'Play again',
+                    ref.tr('play_again'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.background,
@@ -337,7 +349,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     ),
                   ),
                   child: Text(
-                    'Share result',
+                    ref.tr('share_result'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,
@@ -354,7 +366,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Text(
-                    'Home',
+                    ref.tr('home'),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.textSecondary,

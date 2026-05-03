@@ -94,15 +94,21 @@ class HiveService {
 
 // Seuils correct/total pour -1 / 0 / +1 VP par rang
   static const List<List<int>> _flagVpThresholds = [
-    [3, 4, 10],  // Void     — <3 = -1, 3 = 0, >=4 = +1
-    [3, 5, 10],  // Bronze   — <3 = -1, 3-4 = 0, >=5 = +1
-    [4, 5, 10],  // Silver   — <4 = -1, 4 = 0, >=5 = +1
-    [4, 6, 10],  // Gold     — <4 = -1, 4-5 = 0, >=6 = +1
-    [5, 6, 10],  // Platinum — <5 = -1, 5 = 0, >=6 = +1
-    [5, 7, 10],  // Diamond  — <5 = -1, 5-6 = 0, >=7 = +1
-    [6, 7, 10],  // Master   — <6 = -1, 6 = 0, >=7 = +1
-    [6, 8, 10],  // VoidMaster — <6 = -1, 6-7 = 0, >=8 = +1
+    [3, 5, 10],   // Void       — <3 = -1, 3-4 = 0, >=5 = +1
+    [4, 6, 10],   // Bronze     — <4 = -1, 4-5 = 0, >=6 = +1
+    [4, 6, 10],   // Silver     — <4 = -1, 4-5 = 0, >=6 = +1
+    [5, 7, 10],   // Gold       — <5 = -1, 5-6 = 0, >=7 = +1
+    [5, 7, 10],   // Platinum   — <5 = -1, 5-6 = 0, >=7 = +1
+    [7, 8, 10],   // Diamond    — <7 = -1, 7 = 0, >=8 = +1
+    [8, 9, 10],   // Master     — <8 = -1, 8 = 0, >=9 = +1
+    [9, 10, 10],  // VoidMaster — <9 = -1, 9 = 0, 10 = +1
   ];
+
+  Future<void> resetRank() async {
+    final box = Hive.box(_statsBox);
+    await box.put('currentVP', 0);
+    await box.put('rankIndex', 0);
+  }
 
   Future<int> updateFlagRank({
     required int correctCount,

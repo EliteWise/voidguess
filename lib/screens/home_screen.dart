@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:voidguess/core/l10n/app_strings.dart';
+import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/pressable.dart';
@@ -38,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showNameDialog() {
     final controller = TextEditingController();
+    final locale = ref.read(localeProvider);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -50,7 +53,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Choose a name',
+                AppStrings.get('choose_name', locale),
                 style: AppTheme.inter(
                   color: AppTheme.textPrimary,
                   fontSize: 18,
@@ -59,7 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'This will be shown to opponents',
+                AppStrings.get('shown_to_opponents', locale),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 12,
@@ -77,7 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Enter your name',
+                  hintText: AppStrings.get('enter_name', locale),
                   hintStyle: AppTheme.inter(
                     color: AppTheme.textTertiary,
                     fontSize: 15,
@@ -132,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     borderRadius: AppTheme.cardRadius,
                   ),
                   child: Text(
-                    'Continue',
+                    AppStrings.get('continue_btn', locale),
                     textAlign: TextAlign.center,
                     style: AppTheme.inter(
                       color: AppTheme.background,
@@ -243,21 +246,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const _AnimatedTitle(),
               const SizedBox(height: 64),
               _CategoryButton(
-                label: 'Jeux vidéo',
+                label: ref.tr('video_games'),
+                subtitle: ref.tr('mode_subtitle'),
                 icon: PhosphorIcons.gameController(PhosphorIconsStyle.regular),
                 onTap: () => _showModeSheet(context, 'game'),
               ),
               const SizedBox(height: 12),
               _CategoryButton(
-                label: 'Films',
+                label: ref.tr('movies'),
+                subtitle: ref.tr('mode_subtitle'),
                 icon: PhosphorIcons.filmSlate(PhosphorIconsStyle.regular),
                 onTap: () => _showModeSheet(context, 'movie'),
               ),
               const SizedBox(height: 12),
               _CategoryButton(
-                label: 'Flags',
-                icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
+                label: ref.tr('flags'),
                 subtitle: 'Solo · 1v1',
+                icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
                 onTap: () => _showFlagSheet(context),
               ),
               const Spacer(),
@@ -308,7 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Stats & Achievements',
+                        ref.tr('stats_achievements'),
                         style: AppTheme.inter(
                           color: AppTheme.textSecondary,
                           fontSize: 13,
@@ -460,7 +465,7 @@ class _CategoryButton extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onTap,
-    this.subtitle = 'Quick · Full · Hardcore',
+    this.subtitle = '',
   });
 
   @override
@@ -537,13 +542,13 @@ class _CategoryButton extends StatelessWidget {
   }
 }
 
-class _ModeSheet extends StatelessWidget {
+class _ModeSheet extends ConsumerWidget {
   final String category;
 
   const _ModeSheet({required this.category});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -562,7 +567,7 @@ class _ModeSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Choose your mode',
+            ref.tr('choose_mode'),
             style: AppTheme.inter(
               color: AppTheme.textPrimary,
               fontSize: 18,
@@ -575,9 +580,9 @@ class _ModeSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: _ModeCard(
-                  title: 'Quick',
-                  subtitle: '5 items',
-                  description: 'Fast session\n~2 minutes',
+                  title: ref.tr('quick'),
+                  subtitle: ref.tr('items_5'),
+                  description: ref.tr('fast_session'),
                   isHardcore: false,
                   isRanked: false,
                   isDoubleVP: false,
@@ -593,9 +598,9 @@ class _ModeSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _ModeCard(
-                  title: 'Full',
-                  subtitle: '10 items',
-                  description: 'Full run\n~4 minutes',
+                  title: ref.tr('full'),
+                  subtitle: ref.tr('items_10'),
+                  description: ref.tr('full_run'),
                   isHardcore: false,
                   isRanked: true,
                   isDoubleVP: false,
@@ -624,9 +629,9 @@ class _ModeSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: _ModeCard(
-                  title: 'Quick Hard',
-                  subtitle: '5 items',
-                  description: 'One mistake\nand it\'s over',
+                  title: ref.tr('quick_hard'),
+                  subtitle: ref.tr('items_5'),
+                  description: ref.tr('one_mistake'),
                   isHardcore: true,
                   isRanked: false,
                   isDoubleVP: false,
@@ -642,9 +647,9 @@ class _ModeSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _ModeCard(
-                  title: 'Full Hard',
-                  subtitle: '10 items',
-                  description: 'One mistake\nand it\'s over',
+                  title: ref.tr('full_hard'),
+                  subtitle: ref.tr('items_10'),
+                  description: ref.tr('one_mistake'),
                   isHardcore: true,
                   isRanked: true,
                   isDoubleVP: true,
@@ -772,11 +777,11 @@ class _ModeCard extends StatelessWidget {
   }
 }
 
-class _FlagSheet extends StatelessWidget {
+class _FlagSheet extends ConsumerWidget {
   const _FlagSheet();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -795,7 +800,7 @@ class _FlagSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Flags',
+            ref.tr('flags'),
             style: AppTheme.inter(
               color: AppTheme.textPrimary,
               fontSize: 18,
@@ -826,7 +831,7 @@ class _FlagSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Solo',
+                          ref.tr('solo'),
                           style: AppTheme.inter(
                             color: AppTheme.primary,
                             fontSize: 15,
@@ -835,7 +840,7 @@ class _FlagSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '10 flags · Ranked',
+                          ref.tr('solo_ranked'),
                           style: AppTheme.inter(
                             color: AppTheme.textSecondary,
                             fontSize: 12,
@@ -900,7 +905,7 @@ class _FlagSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '10 flags · Challenge a friend',
+                          ref.tr('challenge_friend'),
                           style: AppTheme.inter(
                             color: AppTheme.textSecondary,
                             fontSize: 12,
