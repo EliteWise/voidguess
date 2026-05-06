@@ -1,10 +1,12 @@
 // lib/features/duel/providers/duel_provider.dart
 
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../data/repositories/country_repository.dart';
 import '../../../data/models/country.dart';
+import '../../../data/services/hive_service.dart';
 import '../service/duel_service.dart';
 import '../../flag_game/providers/flag_game_provider.dart';
 
@@ -21,17 +23,20 @@ final duelProvider = StateNotifierProvider<DuelNotifier, DuelState>((ref) {
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
 enum DuelPhase { idle, lobby, countdown, playing, finished }
+
 enum DuelRole { host, guest }
 
 // ─── Player State ───────────────────────────────────────────────────────────
 
 class DuelPlayer {
   final String name;
+  final int rankIndex;
   final bool ready;
   final List<DuelRoundResult> results;
 
   const DuelPlayer({
     required this.name,
+    this.rankIndex = 0,
     this.ready = false,
     this.results = const [],
   });
@@ -45,10 +50,7 @@ class DuelRoundResult {
   final bool correct;
   final int timeSeconds;
 
-  const DuelRoundResult({
-    required this.correct,
-    required this.timeSeconds,
-  });
+  const DuelRoundResult({required this.correct, required this.timeSeconds});
 }
 
 // ─── State ──────────────────────────────────────────────────────────────────
@@ -62,14 +64,14 @@ class DuelState {
   final String? error;
 
   // Jeu en cours
-  final List<Country> countries;     // les 10 pays de la run
-  final List<Country> options;       // les 6 options du round courant
-  final List<int> roundTypes;        // 0 = nameToFlag, 1 = flagToName
+  final List<Country> countries; // les 10 pays de la run
+  final List<Country> options; // les 6 options du round courant
+  final List<int> roundTypes; // 0 = nameToFlag, 1 = flagToName
   final int currentRound;
   final int timeSeconds;
   final bool? isCorrect;
   final int? selectedCountryId;
-  final int countdownValue;          // 3, 2, 1
+  final int countdownValue; // 3, 2, 1
   final bool isRunFinished;
 
   const DuelState({
@@ -95,8 +97,8 @@ class DuelState {
 
   FlagRoundType get currentRoundType =>
       currentRound < roundTypes.length && roundTypes[currentRound] == 1
-          ? FlagRoundType.flagToName
-          : FlagRoundType.nameToFlag;
+      ? FlagRoundType.flagToName
+      : FlagRoundType.nameToFlag;
 
   bool get isHost => role == DuelRole.host;
   bool get opponentJoined => opponent != null;
@@ -163,6 +165,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
       final code = await _service.createRoom(
         playerName: playerName,
+        playerRankIndex: HiveService().getCurrentRankIndex(),
         countryIds: countryIds,
         roundTypes: roundTypes,
       );
@@ -171,7 +174,10 @@ class DuelNotifier extends StateNotifier<DuelState> {
         phase: DuelPhase.lobby,
         role: DuelRole.host,
         roomCode: code,
-        me: DuelPlayer(name: playerName),
+        me: DuelPlayer(
+          name: playerName,
+          rankIndex: HiveService().getCurrentRankIndex(),
+        ),
         countries: selected,
         roundTypes: roundTypes,
       );
@@ -189,6 +195,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
       final success = await _service.joinRoom(
         code: code.toUpperCase(),
         playerName: playerName,
+        playerRankIndex: HiveService().getCurrentRankIndex(),
       );
 
       if (!success) {
@@ -200,7 +207,10 @@ class DuelNotifier extends StateNotifier<DuelState> {
         phase: DuelPhase.lobby,
         role: DuelRole.guest,
         roomCode: code.toUpperCase(),
-        me: DuelPlayer(name: playerName),
+        me: DuelPlayer(
+          name: playerName,
+          rankIndex: HiveService().getCurrentRankIndex(),
+        ),
       );
 
       _listenToRoom(code.toUpperCase());
@@ -213,7 +223,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
   // ── Toggle ready ──────────────────────────────────────────────────────
 
-  Future<void> toggleReady() async {
+  Future<void> toggleReady(AudioPlayer audio) async {
     if (state.roomCode == null || state.me == null) return;
 
     final newReady = !(state.me!.ready);
@@ -224,6 +234,9 @@ class DuelNotifier extends StateNotifier<DuelState> {
       playerId: playerId,
       ready: newReady,
     );
+
+    await audio.setSource(AssetSource('audio/1v1ready.wav'));
+    await audio.resume();
   }
 
   // ── Écouter les changements Firebase ──────────────────────────────────
@@ -238,12 +251,18 @@ class DuelNotifier extends StateNotifier<DuelState> {
       // Parse opponent
       DuelPlayer? opponent;
       final oppNameKey = state.isHost ? 'player_b_name' : 'player_a_name';
+      final oppRankKey = state.isHost
+          ? 'player_b_rank_index'
+          : 'player_a_rank_index';
       final oppReadyKey = state.isHost ? 'player_b_ready' : 'player_a_ready';
-      final oppResultsKey = state.isHost ? 'player_b_results' : 'player_a_results';
+      final oppResultsKey = state.isHost
+          ? 'player_b_results'
+          : 'player_a_results';
 
       if (data[oppNameKey] != null) {
         opponent = DuelPlayer(
           name: data[oppNameKey] as String? ?? 'Player',
+          rankIndex: data[oppRankKey] as int? ?? 0,
           ready: data[oppReadyKey] as bool? ?? false,
           results: _parseResults(data[oppResultsKey]),
         );
@@ -251,10 +270,14 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
       // Parse my ready state
       final myReadyKey = state.isHost ? 'player_a_ready' : 'player_b_ready';
+      final myRankKey = state.isHost
+          ? 'player_a_rank_index'
+          : 'player_b_rank_index';
       final myReady = data[myReadyKey] as bool? ?? false;
 
       final updatedMe = DuelPlayer(
         name: state.me?.name ?? 'Player',
+        rankIndex: data[myRankKey] as int? ?? state.me?.rankIndex ?? 0,
         ready: myReady,
         results: state.me?.results ?? [],
       );
@@ -267,10 +290,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
         final selected = countryIds
             .map((id) => allCountries.firstWhere((c) => c.id == id))
             .toList();
-        state = state.copyWith(
-          countries: selected,
-          roundTypes: roundTypes,
-        );
+        state = state.copyWith(countries: selected, roundTypes: roundTypes);
       }
 
       // Update state based on status
@@ -307,8 +327,6 @@ class DuelNotifier extends StateNotifier<DuelState> {
               opponent: opponent,
             );
             await _loadOptions();
-          } else {
-            state = state.copyWith(opponent: opponent);
           }
           break;
 
@@ -324,15 +342,18 @@ class DuelNotifier extends StateNotifier<DuelState> {
       // Détecte quand les deux joueurs ont fini
       if (status == 'playing' && state.isHost) {
         final myResultsCount = state.me?.results.length ?? 0;
-        final oppResultsCount = opponent?.results.length ?? 0;
+        final oppResultsCount = _parseResults(data[oppResultsKey]);
 
-        if (myResultsCount >= 10 && oppResultsCount >= 10) {
+        if (myResultsCount >= 10 && oppResultsCount.length >= 10) {
           await _service.setStatus(code, 'finished');
         }
       }
 
       // Auto-start countdown
-      if (status == 'waiting' && state.isHost && updatedMe.ready && (opponent?.ready ?? false)) {
+      if (status == 'waiting' &&
+          state.isHost &&
+          updatedMe.ready &&
+          (opponent?.ready ?? false)) {
         await _service.setStatus(code, 'countdown');
       }
     });
@@ -367,7 +388,9 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
   Future<void> _loadOptions() async {
     if (state.currentCountry == null) return;
-    final options = await _countryRepo.getOptions(correct: state.currentCountry!);
+    final options = await _countryRepo.getOptions(
+      correct: state.currentCountry!,
+    );
     state = DuelState(
       phase: state.phase,
       role: state.role,
@@ -422,6 +445,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
     final newResults = <DuelRoundResult>[...(state.me?.results ?? []), result];
     final updatedMe = DuelPlayer(
       name: state.me!.name,
+      rankIndex: state.me!.rankIndex,
       ready: state.me!.ready,
       results: newResults,
     );

@@ -49,4 +49,5 @@ android/key.properties
 *.jks
 *.keystore
 assets/adi-registration.properties
+android/app/src/main/assets/adi-registration.properties
 android/app/google-services.json

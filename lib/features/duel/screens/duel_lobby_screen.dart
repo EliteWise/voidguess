@@ -1,10 +1,12 @@
 // lib/features/duel/screens/duel_lobby_screen.dart
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
+import 'package:voidguess/core/widgets/rank_emblem.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../providers/duel_provider.dart';
@@ -17,6 +19,14 @@ class DuelLobbyScreen extends ConsumerStatefulWidget {
 }
 
 class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
+  final audio = AudioPlayer();
+
+  @override
+  void dispose() {
+    audio.setReleaseMode(ReleaseMode.stop);
+    audio.release();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +90,9 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                       ),
                       backgroundColor: AppTheme.primary,
                       behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: AppTheme.inputRadius),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppTheme.inputRadius,
+                      ),
                     ),
                   );
                 },
@@ -107,46 +119,49 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 
               // ── Players ───────────────────────────────────────────────
               _PlayerRow(
+                rankIndex: state.me?.rankIndex ?? 0,
                 label: state.me?.name ?? 'You',
                 ready: state.me?.ready ?? false,
                 isMe: true,
-                  youLabel: ref.tr('you')
+                youLabel: ref.tr('you'),
               ),
               const SizedBox(height: 12),
               state.opponentJoined
                   ? _PlayerRow(
-                label: state.opponent!.name,
-                ready: state.opponent!.ready,
-                youLabel: ref.tr('you'),
-                isMe: false,
-              )
+                      rankIndex: state.opponent!.rankIndex,
+                      label: state.opponent!.name,
+                      ready: state.opponent!.ready,
+                      youLabel: ref.tr('you'),
+                      isMe: false,
+                    )
                   : Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: AppTheme.neutralRadius,
-                  border: Border.all(
-                    color: AppTheme.textTertiary,
-                    width: 0.5,
-                  ),
-                ),
-                child: Text(
-                  ref.tr('waiting_opponent'),
-                  textAlign: TextAlign.center,
-                  style: AppTheme.inter(
-                    color: AppTheme.textTertiary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: AppTheme.neutralRadius,
+                        border: Border.all(
+                          color: AppTheme.textTertiary,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        ref.tr('waiting_opponent'),
+                        textAlign: TextAlign.center,
+                        style: AppTheme.inter(
+                          color: AppTheme.textTertiary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
 
               const SizedBox(height: 32),
 
               // ── Ready button ──────────────────────────────────────────
               if (state.opponentJoined)
                 Pressable(
-                  onTap: () => ref.read(duelProvider.notifier).toggleReady(),
+                  onTap: () =>
+                      ref.read(duelProvider.notifier).toggleReady(audio),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -157,7 +172,9 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                       borderRadius: AppTheme.cardRadius,
                     ),
                     child: Text(
-                      (state.me?.ready ?? false) ? ref.tr('ready_done') : ref.tr('ready'),
+                      (state.me?.ready ?? false)
+                          ? ref.tr('ready_done')
+                          : ref.tr('ready'),
                       textAlign: TextAlign.center,
                       style: AppTheme.inter(
                         color: AppTheme.background,
@@ -178,12 +195,14 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 }
 
 class _PlayerRow extends StatelessWidget {
+  final int rankIndex;
   final String label;
   final bool ready;
   final bool isMe;
   final String youLabel;
 
   const _PlayerRow({
+    required this.rankIndex,
     required this.label,
     required this.ready,
     required this.isMe,
@@ -199,12 +218,16 @@ class _PlayerRow extends StatelessWidget {
         color: AppTheme.surface,
         borderRadius: AppTheme.neutralRadius,
         border: Border.all(
-          color: ready ? AppTheme.correct.withOpacity(0.5) : AppTheme.textTertiary,
+          color: ready
+              ? AppTheme.correct.withOpacity(0.5)
+              : AppTheme.textTertiary,
           width: ready ? 1 : 0.5,
         ),
       ),
       child: Row(
         children: [
+          RankEmblem(rankIndex: rankIndex, size: 24),
+          const SizedBox(width: 6),
           Text(
             label,
             style: AppTheme.inter(
@@ -217,10 +240,7 @@ class _PlayerRow extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               youLabel,
-              style: AppTheme.inter(
-                color: AppTheme.textTertiary,
-                fontSize: 12,
-              ),
+              style: AppTheme.inter(color: AppTheme.textTertiary, fontSize: 12),
             ),
           ],
           const Spacer(),

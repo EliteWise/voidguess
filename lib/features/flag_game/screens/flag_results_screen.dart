@@ -36,6 +36,9 @@ class FlagResultsScreen extends ConsumerStatefulWidget {
 class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
   int _vpGained = 0;
   int _rankIndexBefore = 0;
+  int _vpBeforeInRank = 0;
+  int _rankIndexAfter = 0;
+
 
   @override
   void initState() {
@@ -45,13 +48,17 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
 
   Future<void> _saveRun() async {
     final rankIndexBefore = HiveService().getCurrentRankIndex();
+    final vpBeforeInRank = HiveService().getVPInCurrentRank();
     final vp = await HiveService().updateFlagRank(
       correctCount: widget.correctCount,
       totalItems: widget.totalItems,
     );
+    final rankIndexAfter = HiveService().getCurrentRankIndex();
     setState(() {
       _vpGained = vp;
       _rankIndexBefore = rankIndexBefore;
+      _vpBeforeInRank = vpBeforeInRank;
+      _rankIndexAfter = rankIndexAfter;
     });
   }
 
@@ -136,10 +143,11 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
               if (_vpGained != 0) ...[
                 const SizedBox(height: 24),
                 RankProgressBar(
-                  vpBefore: HiveService().getVPInCurrentRank() - _vpGained,
+                  key: ValueKey('rank_$_rankIndexBefore\_$_vpGained'),
+                  vpBefore: _vpBeforeInRank,
                   vpGained: _vpGained,
                   rankIndexBefore: _rankIndexBefore,
-                  rankIndexAfter: HiveService().getCurrentRankIndex(),
+                  rankIndexAfter: _rankIndexAfter,
                 ),
               ],
 

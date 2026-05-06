@@ -109,14 +109,6 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '${state.opponent?.results.length ?? 0} / ${state.totalRounds}',
-                style: AppTheme.inter(
-                  color: AppTheme.textTertiary,
-                  fontSize: 12,
-                ),
-              ),
             ],
           ),
         ),

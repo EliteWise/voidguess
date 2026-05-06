@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,11 +25,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _rankIndex = 0;
   int _vpInRank = 0;
 
+  final audio = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
     _loadRank();
+    _backgroundSong();
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkPlayerName());
+  }
+
+  @override
+  void dispose() {
+    audio.dispose();
+    super.dispose();
+  }
+
+  void _backgroundSong() async {
+    await audio.setSource(AssetSource('audio/home_page.wav'));
+    await audio.setVolume(1.0);
+    await audio.setReleaseMode(ReleaseMode.loop);
+    await audio.resume();
   }
 
   void _checkPlayerName() {
@@ -188,6 +205,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Hive.box('stats').put('locale', newLocale);
   }
 
+  void _stopSong() {
+    audio.stop();
+  }
+
   void _showFlagSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -216,30 +237,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Pressable(
-                  onTap: () => _toggleLocale(locale),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: AppTheme.inputRadius,
-                      border: Border.all(
-                        color: AppTheme.textTertiary,
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Text(
-                      locale.toUpperCase(),
-                      style: AppTheme.inter(
-                        color: AppTheme.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Pressable(
+                      onTap: () => _stopSong(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: AppTheme.inputRadius,
+                          border: Border.all(
+                            color: AppTheme.textTertiary,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: PhosphorIcon(PhosphorIcons.musicNote(PhosphorIconsStyle.thin)),
                       ),
                     ),
                   ),
-                ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Pressable(
+                      onTap: () => _toggleLocale(locale),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: AppTheme.inputRadius,
+                          border: Border.all(
+                            color: AppTheme.textTertiary,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          locale.toUpperCase(),
+                          style: AppTheme.inter(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               const UpdateBanner(),

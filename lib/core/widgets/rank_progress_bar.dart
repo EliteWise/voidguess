@@ -83,6 +83,9 @@ class _RankProgressBarState extends State<RankProgressBar> {
           current = 0;
         });
 
+
+        print('=== RANK UP: displayedRankIndex=$_displayedRankIndex, name=${HiveService.rankNames[_displayedRankIndex]}');
+
         continue;
       }
 
@@ -113,6 +116,8 @@ class _RankProgressBarState extends State<RankProgressBar> {
   Widget build(BuildContext context) {
     final rankColor = _rankColors[_displayedRankIndex.clamp(0, _rankColors.length - 1)];
     final rankName = HiveService.rankNames[_displayedRankIndex.clamp(0, HiveService.rankNames.length - 1)];
+
+    print('=== RANK UP: displayedRankIndex=$_displayedRankIndex, name=${HiveService.rankNames[_displayedRankIndex]}');
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),

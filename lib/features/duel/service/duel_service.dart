@@ -9,12 +9,16 @@ class DuelService {
   String _generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random();
-    final code = List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
+    final code = List.generate(
+      4,
+      (_) => chars[random.nextInt(chars.length)],
+    ).join();
     return 'VG-$code';
   }
 
   Future<String> createRoom({
     required String playerName,
+    required int playerRankIndex,
     required List<int> countryIds,
     required List<int> roundTypes,
   }) async {
@@ -30,6 +34,7 @@ class DuelService {
     if (existing != null) {
       return createRoom(
         playerName: playerName,
+        playerRankIndex: playerRankIndex,
         countryIds: countryIds,
         roundTypes: roundTypes,
       );
@@ -41,6 +46,7 @@ class DuelService {
       'country_ids': countryIds,
       'round_types': roundTypes,
       'player_a_name': playerName,
+      'player_a_rank_index': playerRankIndex,
       'player_a_ready': false,
       'player_a_results': [],
       'player_b_results': [],
@@ -52,6 +58,7 @@ class DuelService {
   Future<bool> joinRoom({
     required String code,
     required String playerName,
+    required int playerRankIndex,
   }) async {
     final match = await _client
         .from('matches')
@@ -65,7 +72,11 @@ class DuelService {
 
     await _client
         .from('matches')
-        .update({'player_b_name': playerName, 'player_b_ready': false})
+        .update({
+          'player_b_name': playerName,
+          'player_b_rank_index': playerRankIndex,
+          'player_b_ready': false,
+        })
         .eq('code', code);
 
     return true;
@@ -77,17 +88,11 @@ class DuelService {
     required bool ready,
   }) async {
     final column = playerId == 'player_a' ? 'player_a_ready' : 'player_b_ready';
-    await _client
-        .from('matches')
-        .update({column: ready})
-        .eq('code', code);
+    await _client.from('matches').update({column: ready}).eq('code', code);
   }
 
   Future<void> setStatus(String code, String status) async {
-    await _client
-        .from('matches')
-        .update({'status': status})
-        .eq('code', code);
+    await _client.from('matches').update({'status': status}).eq('code', code);
   }
 
   Future<void> submitRoundResult({
@@ -97,7 +102,9 @@ class DuelService {
     required bool correct,
     required int timeSeconds,
   }) async {
-    final column = playerId == 'player_a' ? 'player_a_results' : 'player_b_results';
+    final column = playerId == 'player_a'
+        ? 'player_a_results'
+        : 'player_b_results';
 
     // Récupère les résultats actuels
     final match = await _client
@@ -107,10 +114,7 @@ class DuelService {
         .single();
 
     final currentResults = List<Map<String, dynamic>>.from(match[column] ?? []);
-    currentResults.add({
-      'correct': correct,
-      'timeSeconds': timeSeconds,
-    });
+    currentResults.add({'correct': correct, 'timeSeconds': timeSeconds});
 
     await _client
         .from('matches')
@@ -135,9 +139,6 @@ class DuelService {
   }
 
   Future<void> deleteRoom(String code) async {
-    await _client
-        .from('matches')
-        .delete()
-        .eq('code', code);
+    await _client.from('matches').delete().eq('code', code);
   }
 }
