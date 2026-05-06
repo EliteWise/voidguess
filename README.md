@@ -59,4 +59,4 @@ Void Guess tracks your best runs, accuracy, average time, score history, and ach
 
 Void Guess is built with Flutter and Supabase.
 
-Current version: `1.6.1`
+Current version: `1.6.2`
