@@ -1,16 +1,62 @@
-# voidguess
+# Void Guess
 
-A new Flutter project.
+Void Guess is a collection of fast guessing mini-games built to learn, recognize, and remember cultural references and flags.
 
-## Getting Started
+Play short runs, improve your accuracy, climb the ranked ladder, or challenge a friend in real-time.
 
-This project is a starting point for a Flutter application.
+## Game Modes
 
-A few resources to get you started if this is your first Flutter project:
+Void Guess includes three categories:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Video games
+- Movies
+- Flags
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Video Games and Movies
+
+Guess the title from visual clues. Each run rewards speed and accuracy, with optional hints when you need an extra lead.
+
+Both categories include four formats:
+
+- Quick: 5 guess
+- Full: 10 guess
+- Quick Hardcore: 5 guess, one mistake ends the run
+- Full Hardcore: 10 guess, one mistake ends the run
+
+### Flags
+
+Learn and test country flags through solo ranked runs or direct challenges against another player.
+
+Flags include two formats:
+
+- Solo ranked: 10 flags
+- 1v1 duel: create or join a private room with a code
+
+## Ranked Progression
+
+Void Guess includes a VP-based ranked system. Your rank evolves with your performance across ranked runs.
+
+Ranks:
+
+- Void
+- Bronze
+- Silver
+- Gold
+- Platinum
+- Diamond
+- Master
+- Void Master
+
+## 1v1 Duels
+
+In duel mode, two players face the same 10 flags in a private room. The fastest and most accurate player wins.
+
+## Stats and Achievements
+
+Void Guess tracks your best runs, accuracy, average time, score history, and achievements.
+
+## Project
+
+Void Guess is built with Flutter and Supabase.
+
+Current version: `1.6.1`
