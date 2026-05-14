@@ -27,7 +27,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular), color: AppTheme.textSecondary),
+          icon: Icon(
+            PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
+            color: AppTheme.textSecondary,
+          ),
           onPressed: () => context.go('/'),
         ),
         title: Text(
@@ -49,10 +52,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: AppTheme.neutralRadius,
-                border: Border.all(
-                  color: AppTheme.textTertiary,
-                  width: 0.5,
-                ),
+                border: Border.all(color: AppTheme.textTertiary, width: 0.5),
               ),
               child: Row(
                 children: [
@@ -105,9 +105,9 @@ class _TabPill extends StatelessWidget {
             borderRadius: AppTheme.neutralRadius,
             border: selected
                 ? Border.all(
-              color: AppTheme.primaryDeep.withOpacity(0.4),
-              width: 0.5,
-            )
+                    color: AppTheme.primaryDeep.withValues(alpha: 0.4),
+                    width: 0.5,
+                  )
                 : null,
           ),
           child: Text(
@@ -146,17 +146,17 @@ class _StatsTab extends ConsumerWidget {
         ),
         content: Text(
           AppStrings.get('reset_rank_desc', locale),
-          style: AppTheme.inter(
-            color: AppTheme.textSecondary,
-            fontSize: 13,
-          ),
+          style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               AppStrings.get('cancel', locale),
-              style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 13),
+              style: AppTheme.inter(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+              ),
             ),
           ),
           TextButton(
@@ -208,10 +208,7 @@ class _StatsTab extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: AppTheme.neutralRadius,
-                border: Border.all(
-                  color: AppTheme.textTertiary,
-                  width: 0.5,
-                ),
+                border: Border.all(color: AppTheme.textTertiary, width: 0.5),
               ),
               child: Text(
                 ref.tr('no_runs'),
@@ -229,7 +226,7 @@ class _StatsTab extends ConsumerWidget {
                 color: AppTheme.surface,
                 borderRadius: AppTheme.neutralRadius,
                 border: Border.all(
-                  color: AppTheme.primary.withOpacity(0.2),
+                  color: AppTheme.primary.withValues(alpha: 0.2),
                   width: 0.5,
                 ),
               ),
@@ -271,7 +268,8 @@ class _StatsTab extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4,
+                      horizontal: 10,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryDim,
@@ -348,7 +346,7 @@ class _StatsTab extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: AppTheme.neutralRadius,
                 border: Border.all(
-                  color: AppTheme.wrong.withOpacity(0.3),
+                  color: AppTheme.wrong.withValues(alpha: 0.3),
                   width: 0.5,
                 ),
               ),
@@ -429,11 +427,7 @@ class _GlobalCard extends StatelessWidget {
   final String value;
   final String? unit;
 
-  const _GlobalCard({
-    required this.label,
-    required this.value,
-    this.unit,
-  });
+  const _GlobalCard({required this.label, required this.value, this.unit});
 
   @override
   Widget build(BuildContext context) {
@@ -442,10 +436,7 @@ class _GlobalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: AppTheme.neutralRadius,
-        border: Border.all(
-          color: AppTheme.textTertiary,
-          width: 0.5,
-        ),
+        border: Border.all(color: AppTheme.textTertiary, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,10 +469,7 @@ class _GlobalCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: AppTheme.inter(
-              color: AppTheme.textSecondary,
-              fontSize: 11,
-            ),
+            style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 11),
           ),
         ],
       ),
@@ -527,11 +515,9 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
   }
 
   static const _categoryKeys = {
-    'speed': 'cat_speed',
-    'precision': 'cat_precision',
-    'runs': 'cat_runs',
-    'score': 'cat_score',
-    'categories': 'cat_categories',
+    'guess': 'cat_guess',
+    'flags': 'cat_flags',
+    'space': 'cat_space',
     'secret': 'cat_secret',
   };
 
@@ -546,134 +532,157 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
       );
     }
 
-    final categories = [
-      'speed',
-      'precision',
-      'runs',
-      'score',
-      'categories',
-      'secret',
-    ];
+    const categories = ['guess', 'flags', 'space', 'secret'];
+    final totalUnlocked = _achievements
+        .where((achievement) => _unlocked.contains(achievement.id))
+        .length;
 
     return ListView(
       padding: const EdgeInsets.all(24),
-      children: categories.map((cat) {
-        final items = _achievements.where((a) => a.category == cat).toList();
-        final unlockedCount =
-            items.where((a) => _unlocked.contains(a.id)).length;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10, top: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    ref.tr(_categoryKeys[cat]!),
-                    style: AppTheme.inter(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    '$unlockedCount/${items.length}',
-                    style: AppTheme.inter(
-                      color: AppTheme.textSecondary,
-                      fontSize: 10,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              '$totalUnlocked/${_achievements.length}',
+              style: AppTheme.inter(
+                color: AppTheme.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            ...items.map((achievement) {
-              final isUnlocked = _unlocked.contains(achievement.id);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isUnlocked ? AppTheme.surface : AppTheme.background,
-                  borderRadius: AppTheme.neutralRadius,
-                  border: Border.all(
-                    color: isUnlocked
-                        ? AppTheme.primary.withOpacity(0.25)
-                        : AppTheme.textTertiary.withOpacity(0.5),
-                    width: 0.5,
-                  ),
-                ),
+          ),
+        ),
+        ...categories.map((cat) {
+          final items = _achievements.where((a) => a.category == cat).toList()
+            ..sort((a, b) {
+              final aUnlocked = _unlocked.contains(a.id);
+              final bUnlocked = _unlocked.contains(b.id);
+              if (aUnlocked == bUnlocked) return 0;
+              return aUnlocked ? -1 : 1;
+            });
+          final unlockedCount = items
+              .where((a) => _unlocked.contains(a.id))
+              .length;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10, top: 8),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: isUnlocked
-                            ? AppTheme.primaryDim
-                            : AppTheme.surface,
-                        borderRadius: AppTheme.inputRadius,
-                      ),
-                      child: Icon(
-                        isUnlocked
-                            ? PhosphorIcons.trophy(PhosphorIconsStyle.regular)
-                            : PhosphorIcons.lock(PhosphorIconsStyle.regular),
-                        color: isUnlocked
-                            ? AppTheme.primary
-                            : AppTheme.textSecondary,
-                        size: 18,
+                    Text(
+                      ref.tr(_categoryKeys[cat]!),
+                      style: AppTheme.inter(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            achievement.title,  // TODO: multilingue via achievements.json
-                            style: AppTheme.inter(
-                              color: isUnlocked
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textTertiary,
-                              fontSize: 14,
-                              fontWeight: isUnlocked
-                                  ? FontWeight.w700
-                                  : FontWeight.w400,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _getDescription(achievement, isUnlocked),  // TODO: multilingue
-                            style: AppTheme.inter(
-                              color: isUnlocked
-                                  ? AppTheme.textSecondary
-                                  : AppTheme.textTertiary,
-                              fontSize: 11,
-                              letterSpacing:
-                              achievement.category == 'secret' &&
-                                  !isUnlocked
-                                  ? 2
-                                  : 0,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      '$unlockedCount/${items.length}',
+                      style: AppTheme.inter(
+                        color: AppTheme.textSecondary,
+                        fontSize: 10,
+                        letterSpacing: 1,
                       ),
                     ),
-                    if (isUnlocked)
-                      Icon(
-                        PhosphorIcons.checkCircle(PhosphorIconsStyle.regular),
-                        color: AppTheme.correct,
-                        size: 16,
-                      ),
                   ],
                 ),
-              );
-            }),
-            const SizedBox(height: 16),
-          ],
-        );
-      }).toList(),
+              ),
+              ...items.map((achievement) {
+                final isUnlocked = _unlocked.contains(achievement.id);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isUnlocked ? AppTheme.surface : AppTheme.background,
+                    borderRadius: AppTheme.neutralRadius,
+                    border: Border.all(
+                      color: isUnlocked
+                          ? AppTheme.primary.withValues(alpha: 0.25)
+                          : AppTheme.textTertiary.withValues(alpha: 0.5),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isUnlocked
+                              ? AppTheme.primaryDim
+                              : AppTheme.surface,
+                          borderRadius: AppTheme.inputRadius,
+                        ),
+                        child: Icon(
+                          isUnlocked
+                              ? PhosphorIcons.trophy(PhosphorIconsStyle.regular)
+                              : PhosphorIcons.lock(PhosphorIconsStyle.regular),
+                          color: isUnlocked
+                              ? AppTheme.primary
+                              : AppTheme.textSecondary,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              achievement
+                                  .title, // TODO: multilingue via achievements.json
+                              style: AppTheme.inter(
+                                color: isUnlocked
+                                    ? AppTheme.textPrimary
+                                    : AppTheme.textTertiary,
+                                fontSize: 14,
+                                fontWeight: isUnlocked
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _getDescription(
+                                achievement,
+                                isUnlocked,
+                              ), // TODO: multilingue
+                              style: AppTheme.inter(
+                                color: isUnlocked
+                                    ? AppTheme.textSecondary
+                                    : AppTheme.textTertiary,
+                                fontSize: 11,
+                                letterSpacing:
+                                    achievement.category == 'secret' &&
+                                        !isUnlocked
+                                    ? 2
+                                    : 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isUnlocked)
+                        Icon(
+                          PhosphorIcons.checkCircle(PhosphorIconsStyle.regular),
+                          color: AppTheme.correct,
+                          size: 16,
+                        ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          );
+        }),
+      ],
     );
   }
 }

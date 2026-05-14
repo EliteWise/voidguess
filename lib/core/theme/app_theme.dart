@@ -11,6 +11,8 @@ class AppTheme {
   static const Color primary = Color(0xFFE8E8F0);
   static const Color primaryDeep = Color(0xFF4040FF);
   static const Color primaryDim = Color(0xFF2A2A3A);
+  static const Color action = Color(0xFF111118);
+  static const Color actionText = Color(0xFFE8E8F0);
 
   // Feedback
   static const Color correct = Color(0xFF00E676);
@@ -22,29 +24,27 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF8888AA);
   static const Color textTertiary = Color(0xFF444458);
 
-  static TextTheme get _textTheme => GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-    headlineLarge: GoogleFonts.inter(
-      color: textPrimary,
-      fontSize: 32,
-      fontWeight: FontWeight.w500,
-      letterSpacing: -1,
-    ),
-    headlineMedium: GoogleFonts.inter(
-      color: textPrimary,
-      fontSize: 24,
-      fontWeight: FontWeight.w500,
-      letterSpacing: -0.5,
-    ),
-    bodyLarge: GoogleFonts.inter(
-      color: textPrimary,
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-    ),
-    bodyMedium: GoogleFonts.inter(
-      color: textSecondary,
-      fontSize: 14,
-    ),
-  );
+  static TextTheme get _textTheme =>
+      GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
+        headlineLarge: GoogleFonts.inter(
+          color: textPrimary,
+          fontSize: 32,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -1,
+        ),
+        headlineMedium: GoogleFonts.inter(
+          color: textPrimary,
+          fontSize: 24,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.5,
+        ),
+        bodyLarge: GoogleFonts.inter(
+          color: textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+        ),
+        bodyMedium: GoogleFonts.inter(color: textSecondary, fontSize: 14),
+      );
 
   static ThemeData get dark => ThemeData(
     fontFamily: GoogleFonts.inter().fontFamily,
@@ -95,9 +95,7 @@ class AppTheme {
     bottomRight: Radius.circular(0),
   );
 
-  static const BorderRadius inputRadius = BorderRadius.all(
-    Radius.circular(4),
-  );
+  static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(4));
 
   static const BorderRadius neutralRadius = BorderRadius.all(
     Radius.circular(6),

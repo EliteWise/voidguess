@@ -11,6 +11,7 @@ import '../core/theme/app_theme.dart';
 import '../core/widgets/pressable.dart';
 import '../core/widgets/rank_emblem.dart';
 import '../core/widgets/update_banner.dart';
+import '../core/widgets/void_action_button.dart';
 import '../features/game/providers/game_provider.dart';
 import '../data/services/hive_service.dart';
 
@@ -136,7 +137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              Pressable(
+              VoidActionButton(
                 onTap: () {
                   final name = controller.text.trim();
                   if (name.isNotEmpty) {
@@ -144,23 +145,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Navigator.of(dialogContext).pop();
                   }
                 },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryDeep,
-                    borderRadius: AppTheme.cardRadius,
-                  ),
-                  child: Text(
-                    AppStrings.get('continue_btn', locale),
-                    textAlign: TextAlign.center,
-                    style: AppTheme.inter(
-                      color: AppTheme.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                label: AppStrings.get('continue_btn', locale),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ],
           ),
@@ -230,147 +216,239 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Pressable(
-                      onTap: () => _stopSong(),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: AppTheme.inputRadius,
-                          border: Border.all(
-                            color: AppTheme.textTertiary,
-                            width: 0.5,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Pressable(
+                                onTap: () => _stopSong(),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surface,
+                                    borderRadius: AppTheme.inputRadius,
+                                    border: Border.all(
+                                      color: AppTheme.textTertiary,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: PhosphorIcon(
+                                    PhosphorIcons.musicNote(
+                                      PhosphorIconsStyle.thin,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Pressable(
+                                onTap: () => _toggleLocale(locale),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surface,
+                                    borderRadius: AppTheme.inputRadius,
+                                    border: Border.all(
+                                      color: AppTheme.textTertiary,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    locale.toUpperCase(),
+                                    style: AppTheme.inter(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        const UpdateBanner(),
+                        const _AnimatedTitle(),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SoloGameTile(
+                                label: ref.tr('video_games'),
+                                subtitle: ref.tr('mode_subtitle_compact'),
+                                icon: PhosphorIcons.gameController(
+                                  PhosphorIconsStyle.regular,
+                                ),
+                                onTap: () => _showModeSheet(context, 'game'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _SoloGameTile(
+                                label: ref.tr('movies'),
+                                subtitle: ref.tr('mode_subtitle_compact'),
+                                icon: PhosphorIcons.filmSlate(
+                                  PhosphorIconsStyle.regular,
+                                ),
+                                onTap: () => _showModeSheet(context, 'movie'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SoloGameTile(
+                                label: ref.tr('flags'),
+                                subtitle: ref.tr('solo_ranked_compact'),
+                                icon: PhosphorIcons.flag(
+                                  PhosphorIconsStyle.regular,
+                                ),
+                                onTap: () => _showFlagSheet(context),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _SoloGameTile(
+                                label: ref.tr('space'),
+                                subtitle: ref.tr('space_subtitle_compact'),
+                                icon: PhosphorIcons.rocketLaunch(
+                                  PhosphorIconsStyle.regular,
+                                ),
+                                onTap: () => context.go('/space_game'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SoloGameTile(
+                                label: ref.tr('gemstones'),
+                                subtitle: ref.tr('gemstones_subtitle_compact'),
+                                icon: PhosphorIcons.diamond(
+                                PhosphorIconsStyle.regular,
+                              ),
+                              onTap: () => context.go('/gemstone_game'),
+                            ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _SoloGameTile(
+                                label: 'Olympus',
+                                subtitle: 'Soon',
+                                icon: PhosphorIcons.shield(
+                                  PhosphorIconsStyle.regular,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _MultiplayerButton(
+                          label: ref.tr('multiplayer'),
+                          subtitle: ref.tr('multiplayer_subtitle'),
+                          onTap: () => context.go('/duel'),
+                        ),
+                        const Spacer(),
+                        const SizedBox(height: 14),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: RankEmblem(
+                                  rankIndex: _rankIndex,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isVoidMaster
+                                    ? '$rankName  $_vpInRank VP'
+                                    : '$rankName  $_vpInRank / 10 VP',
+                                style: AppTheme.inter(
+                                  color: rankColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: PhosphorIcon(PhosphorIcons.musicNote(PhosphorIconsStyle.thin)),
-                      ),
+                        Pressable(
+                          onTap: () => context.go('/stats'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 20,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              borderRadius: AppTheme.neutralRadius,
+                              border: Border.all(
+                                color: AppTheme.textTertiary,
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  PhosphorIcons.trophy(
+                                    PhosphorIconsStyle.regular,
+                                  ),
+                                  color: AppTheme.textSecondary,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  ref.tr('stats_achievements'),
+                                  style: AppTheme.inter(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Pressable(
-                      onTap: () => _toggleLocale(locale),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: AppTheme.inputRadius,
-                          border: Border.all(
-                            color: AppTheme.textTertiary,
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          locale.toUpperCase(),
-                          style: AppTheme.inter(
-                            color: AppTheme.textSecondary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              const UpdateBanner(),
-              const _AnimatedTitle(),
-              const SizedBox(height: 64),
-              _CategoryButton(
-                label: ref.tr('video_games'),
-                subtitle: ref.tr('mode_subtitle'),
-                icon: PhosphorIcons.gameController(PhosphorIconsStyle.regular),
-                onTap: () => _showModeSheet(context, 'game'),
-              ),
-              const SizedBox(height: 12),
-              _CategoryButton(
-                label: ref.tr('movies'),
-                subtitle: ref.tr('mode_subtitle'),
-                icon: PhosphorIcons.filmSlate(PhosphorIconsStyle.regular),
-                onTap: () => _showModeSheet(context, 'movie'),
-              ),
-              const SizedBox(height: 12),
-              _CategoryButton(
-                label: ref.tr('flags'),
-                subtitle: 'Solo · 1v1',
-                icon: PhosphorIcons.flag(PhosphorIconsStyle.regular),
-                onTap: () => _showFlagSheet(context),
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: RankEmblem(rankIndex: _rankIndex, size: 24),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isVoidMaster
-                          ? '$rankName  $_vpInRank VP'
-                          : '$rankName  $_vpInRank / 10 VP',
-                      style: AppTheme.inter(
-                        color: rankColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
                 ),
               ),
-              Pressable(
-                onTap: () => context.go('/stats'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: AppTheme.neutralRadius,
-                    border: Border.all(
-                      color: AppTheme.textTertiary,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        PhosphorIcons.trophy(PhosphorIconsStyle.regular),
-                        color: AppTheme.textSecondary,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        ref.tr('stats_achievements'),
-                        style: AppTheme.inter(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -475,10 +553,7 @@ class _AnimatedTitleState extends State<_AnimatedTitle> {
         ).createShader(bounds);
       },
       blendMode: BlendMode.srcIn,
-      child: _buildTitleContent(
-        color1: Colors.white,
-        color2: Colors.white,
-      ),
+      child: _buildTitleContent(color1: Colors.white, color2: Colors.white),
     );
   }
 }
@@ -499,17 +574,101 @@ class _DiagonalClipper extends CustomClipper<Path> {
   bool shouldReclip(_DiagonalClipper oldClipper) => false;
 }
 
-class _CategoryButton extends StatelessWidget {
+class _SoloGameTile extends StatelessWidget {
   final String label;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final String subtitle;
 
-  const _CategoryButton({
+  const _SoloGameTile({
     required this.label,
     required this.icon,
-    required this.onTap,
+    this.onTap,
     this.subtitle = '',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Container(
+      height: 90,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: const Alignment(1.0, -1.0),
+          end: const Alignment(-0.5, 1.0),
+          colors: [
+            AppTheme.primaryDeep.withValues(alpha: 0.08),
+            AppTheme.surface,
+          ],
+        ),
+        borderRadius: AppTheme.cardRadius,
+        border: Border.all(color: AppTheme.textTertiary, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryDim,
+              borderRadius: AppTheme.chipRadius,
+            ),
+            child: Center(
+              child: Icon(icon, color: AppTheme.primary, size: 17),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.inter(
+                    color: AppTheme.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.inter(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+            color: AppTheme.textTertiary,
+            size: 11,
+          ),
+        ],
+      ),
+    );
+    return Pressable(onTap: onTap, child: content);
+  }
+}
+
+class _MultiplayerButton extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _MultiplayerButton({
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
   });
 
   @override
@@ -517,69 +676,111 @@ class _CategoryButton extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        padding: const EdgeInsets.all(1),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: const Alignment(1.0, -1.0),
-            end: const Alignment(-0.5, 1.0),
+            end: const Alignment(-1.0, 1.0),
             colors: [
-              AppTheme.primaryDeep.withOpacity(0.08),
-              AppTheme.surface,
+              AppTheme.primary.withValues(alpha: 0.32),
+              AppTheme.primaryDeep.withValues(alpha: 0.7),
+              AppTheme.textTertiary.withValues(alpha: 0.55),
             ],
           ),
           borderRadius: AppTheme.cardRadius,
-          border: Border.all(
-            color: AppTheme.textTertiary,
-            width: 0.5,
-          ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryDim,
-                borderRadius: AppTheme.chipRadius,
-              ),
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: AppTheme.primary,
-                  size: 20,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+          decoration: BoxDecoration(
+            color: AppTheme.background,
+            borderRadius: AppTheme.cardRadius,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceHigh,
+                  borderRadius: AppTheme.chipRadius,
+                  border: Border.all(
+                    color: AppTheme.primaryDeep.withValues(alpha: 0.55),
+                    width: 0.5,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    PhosphorIcons.sword(PhosphorIconsStyle.bold),
+                    color: AppTheme.primary,
+                    size: 21,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: AppTheme.inter(
-                      color: AppTheme.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            label,
+                            style: AppTheme.inter(
+                              color: AppTheme.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryDeep.withValues(alpha: 0.18),
+                            borderRadius: AppTheme.inputRadius,
+                          ),
+                          child: Text(
+                            '1v1',
+                            style: AppTheme.inter(
+                              color: AppTheme.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTheme.inter(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: AppTheme.inter(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(
-              PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
-              color: AppTheme.textTertiary,
-              size: 12,
-            ),
-          ],
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppTheme.correct,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+                color: AppTheme.primary,
+                size: 12,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -632,10 +833,13 @@ class _ModeSheet extends ConsumerWidget {
                   isDoubleVP: false,
                   onTap: () {
                     Navigator.pop(context);
-                    context.go('/game', extra: {
-                      'mode': RunMode.quickNormal,
-                      'category': category,
-                    });
+                    context.go(
+                      '/game',
+                      extra: {
+                        'mode': RunMode.quickNormal,
+                        'category': category,
+                      },
+                    );
                   },
                 ),
               ),
@@ -650,10 +854,10 @@ class _ModeSheet extends ConsumerWidget {
                   isDoubleVP: false,
                   onTap: () {
                     Navigator.pop(context);
-                    context.go('/game', extra: {
-                      'mode': RunMode.fullNormal,
-                      'category': category,
-                    });
+                    context.go(
+                      '/game',
+                      extra: {'mode': RunMode.fullNormal, 'category': category},
+                    );
                   },
                 ),
               ),
@@ -681,10 +885,13 @@ class _ModeSheet extends ConsumerWidget {
                   isDoubleVP: false,
                   onTap: () {
                     Navigator.pop(context);
-                    context.go('/game', extra: {
-                      'mode': RunMode.quickHardcore,
-                      'category': category,
-                    });
+                    context.go(
+                      '/game',
+                      extra: {
+                        'mode': RunMode.quickHardcore,
+                        'category': category,
+                      },
+                    );
                   },
                 ),
               ),
@@ -699,10 +906,13 @@ class _ModeSheet extends ConsumerWidget {
                   isDoubleVP: true,
                   onTap: () {
                     Navigator.pop(context);
-                    context.go('/game', extra: {
-                      'mode': RunMode.fullHardcore,
-                      'category': category,
-                    });
+                    context.go(
+                      '/game',
+                      extra: {
+                        'mode': RunMode.fullHardcore,
+                        'category': category,
+                      },
+                    );
                   },
                 ),
               ),
@@ -863,10 +1073,7 @@ class _FlagSheet extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppTheme.background,
                 borderRadius: AppTheme.chipRadius,
-                border: Border.all(
-                  color: AppTheme.textTertiary,
-                  width: 0.5,
-                ),
+                border: Border.all(color: AppTheme.textTertiary, width: 0.5),
               ),
               child: Row(
                 children: [
@@ -912,56 +1119,6 @@ class _FlagSheet extends ConsumerWidget {
                         ),
                       ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Pressable(
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/duel');
-            },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.background,
-                borderRadius: AppTheme.chipRadius,
-                border: Border.all(
-                  color: AppTheme.primaryDeep.withOpacity(0.3),
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '1v1',
-                          style: AppTheme.inter(
-                            color: AppTheme.primaryDeep,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          ref.tr('challenge_friend'),
-                          style: AppTheme.inter(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    PhosphorIcons.sword(PhosphorIconsStyle.regular),
-                    color: AppTheme.primaryDeep.withOpacity(0.5),
-                    size: 16,
                   ),
                 ],
               ),

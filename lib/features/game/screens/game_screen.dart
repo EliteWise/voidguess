@@ -7,6 +7,7 @@ import '../../../core/l10n/l10n.dart';
 import '../../../core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/void_action_button.dart';
 import '../providers/game_provider.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -34,10 +35,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Future<void> _startRun() async {
-    await ref.read(gameProvider.notifier).startRun(
-      mode: widget.mode,
-      category: widget.category,
-    );
+    await ref
+        .read(gameProvider.notifier)
+        .startRun(mode: widget.mode, category: widget.category);
     _startTimers();
     _loadSuggestions();
   }
@@ -45,7 +45,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Future<void> _loadSuggestions() async {
     final repo = ref.read(itemRepositoryProvider);
     final locale = ref.read(localeProvider);
-    final names = await repo.getItemNames(category: widget.category, locale: locale);
+    final names = await repo.getItemNames(
+      category: widget.category,
+      locale: locale,
+    );
     setState(() => _suggestions = names);
   }
 
@@ -85,15 +88,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _controller.clear();
     final state = ref.read(gameProvider);
     if (state.isRunFinished) {
-      context.go('/results', extra: {
-        'itemResults': state.itemResults,
-        'totalScore': state.totalScore,
-        'itemsFound': state.itemsFound,
-        'totalItems': state.totalItems,
-        'mode': state.runMode,
-        'category': widget.category,
-        'isHardcoreFail': state.isLost && state.runMode.isHardcore,
-      });
+      context.go(
+        '/results',
+        extra: {
+          'itemResults': state.itemResults,
+          'totalScore': state.totalScore,
+          'itemsFound': state.itemsFound,
+          'totalItems': state.totalItems,
+          'mode': state.runMode,
+          'category': widget.category,
+          'isHardcoreFail': state.isLost && state.runMode.isHardcore,
+        },
+      );
     } else {
       _showItemRecap(state);
     }
@@ -117,7 +123,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         missedLabel: ref.tr('missed'),
         scoreLabel: ref.tr('score'),
         timeLabel: ref.tr('time'),
-        categoryLabel: state.category == 'game' ? ref.tr('game_label') : ref.tr('film_label'),
+        categoryLabel: state.category == 'game'
+            ? ref.tr('game_label')
+            : ref.tr('film_label'),
         nextLabel: ref.tr('next'),
         onNext: () {
           Navigator.of(context).pop();
@@ -158,10 +166,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         elevation: 0,
         title: Text(
           '${state.currentItemIndex + 1} / ${state.totalItems}',
-          style: AppTheme.inter(
-            color: AppTheme.textSecondary,
-            fontSize: 13,
-          ),
+          style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 13),
         ),
         centerTitle: true,
         actions: [
@@ -204,7 +209,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Container(
                   margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 4,
+                    horizontal: 12,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.wrong.withOpacity(0.08),
@@ -278,7 +284,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   onTap: () {
                     ref.read(gameProvider.notifier).useHint();
                     final repo = ref.read(itemRepositoryProvider);
-                    final randomHint = repo.getRandomHint(state.currentItem!.getHint(locale));
+                    final randomHint = repo.getRandomHint(
+                      state.currentItem!.getHint(locale),
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -298,7 +306,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10,
+                      horizontal: 16,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.hint.withOpacity(0.06),
@@ -409,10 +418,7 @@ class _ItemRecapDialog extends StatelessWidget {
                   value: '+$score',
                   color: found ? AppTheme.correct : AppTheme.wrong,
                 ),
-                _RecapStat(
-                  label: 'Time',
-                  value: '${timeSeconds}s',
-                ),
+                _RecapStat(label: 'Time', value: '${timeSeconds}s'),
                 _RecapStat(
                   label: category == 'game' ? 'Game' : 'Film',
                   value: '$current/$total',
@@ -423,26 +429,7 @@ class _ItemRecapDialog extends StatelessWidget {
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: Pressable(
-                onTap: onNext,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryDeep,
-                    borderRadius: AppTheme.cardRadius,
-                  ),
-                  child: Text(
-                    'Next',
-                    textAlign: TextAlign.center,
-                    style: AppTheme.inter(
-                      color: AppTheme.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
+              child: VoidActionButton(onTap: onNext, label: 'Next'),
             ),
           ],
         ),
@@ -478,10 +465,7 @@ class _RecapStat extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: AppTheme.inter(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-          ),
+          style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 11),
         ),
       ],
     );

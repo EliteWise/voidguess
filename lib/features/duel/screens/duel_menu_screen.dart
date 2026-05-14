@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
+import 'package:voidguess/core/widgets/void_action_button.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../data/services/hive_service.dart';
@@ -94,17 +95,16 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
 
               // ── Title ─────────────────────────────────────────────────
               Text(
-                '1v1',
+                ref.tr('multiplayer'),
                 style: AppTheme.inter(
                   color: AppTheme.textPrimary,
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                ref.tr('flags'),
+                ref.tr('multiplayer_subtitle'),
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 14,
@@ -114,25 +114,9 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
               const SizedBox(height: 48),
 
               // ── Create room ───────────────────────────────────────────
-              Pressable(
+              VoidActionButton(
                 onTap: _createRoom,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryDeep,
-                    borderRadius: AppTheme.cardRadius,
-                  ),
-                  child: Text(
-                    ref.tr('create_room'),
-                    textAlign: TextAlign.center,
-                    style: AppTheme.inter(
-                      color: AppTheme.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                label: ref.tr('create_room'),
               ),
 
               const SizedBox(height: 24),
@@ -140,7 +124,9 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
               // ── Separator ─────────────────────────────────────────────
               Row(
                 children: [
-                  Expanded(child: Container(height: 0.5, color: AppTheme.textTertiary)),
+                  Expanded(
+                    child: Container(height: 0.5, color: AppTheme.textTertiary),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -151,7 +137,9 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                       ),
                     ),
                   ),
-                  Expanded(child: Container(height: 0.5, color: AppTheme.textTertiary)),
+                  Expanded(
+                    child: Container(height: 0.5, color: AppTheme.textTertiary),
+                  ),
                 ],
               ),
 
@@ -180,14 +168,18 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                   border: OutlineInputBorder(
                     borderRadius: AppTheme.neutralRadius,
                     borderSide: BorderSide(
-                      color: _error != null ? AppTheme.wrong : AppTheme.textTertiary,
+                      color: _error != null
+                          ? AppTheme.wrong
+                          : AppTheme.textTertiary,
                       width: 0.5,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: AppTheme.neutralRadius,
                     borderSide: BorderSide(
-                      color: _error != null ? AppTheme.wrong : AppTheme.textTertiary,
+                      color: _error != null
+                          ? AppTheme.wrong
+                          : AppTheme.textTertiary,
                       width: 0.5,
                     ),
                   ),
@@ -205,10 +197,7 @@ class _DuelMenuScreenState extends ConsumerState<DuelMenuScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _error!,
-                  style: AppTheme.inter(
-                    color: AppTheme.wrong,
-                    fontSize: 12,
-                  ),
+                  style: AppTheme.inter(color: AppTheme.wrong, fontSize: 12),
                 ),
               ],
 

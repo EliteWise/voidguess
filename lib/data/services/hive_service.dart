@@ -8,8 +8,14 @@ class HiveService {
   // ─── Ranked ─────────────────────────────────────────────
 
   static const List<String> rankNames = [
-    'Void', 'Bronze', 'Silver', 'Gold',
-    'Platinum', 'Diamond', 'Master', 'Void Master',
+    'Void',
+    'Bronze',
+    'Silver',
+    'Gold',
+    'Platinum',
+    'Diamond',
+    'Master',
+    'Void Master',
   ];
 
   static const int vpPerRank = 10;
@@ -19,11 +25,17 @@ class HiveService {
   int calculateVP(int score, int rankIndex, bool isHardcore) {
     final thresholds = _vpThresholds[rankIndex];
     int vp;
-    if (score < thresholds[0]) vp = -2;
-    else if (score < thresholds[1]) vp = -1;
-    else if (score < thresholds[2]) vp = 0;
-    else if (score < thresholds[3]) vp = 1;
-    else vp = 2;
+    if (score < thresholds[0]) {
+      vp = -2;
+    } else if (score < thresholds[1]) {
+      vp = -1;
+    } else if (score < thresholds[2]) {
+      vp = 0;
+    } else if (score < thresholds[3]) {
+      vp = 1;
+    } else {
+      vp = 2;
+    }
 
     if (isHardcore) vp *= 2;
     return vp;
@@ -31,19 +43,17 @@ class HiveService {
 
   // Seuils [−2, −1, 0, +1, +2] pour chaque rang
   static const List<List<int>> _vpThresholds = [
-    [80,   350,  750,  2500, 99999],  // Void
-    [150,  600,  1200, 3000, 99999],  // Bronze
-    [250,  900,  1800, 3500, 99999],  // Silver
-    [400,  1400, 2600, 4300, 99999],  // Gold
-    [600,  2000, 3500, 5300, 99999],  // Platinum
-    [800,  2800, 4800, 6300, 99999],  // Diamond
-    [1000, 3500, 5500, 7000, 99999],  // Master
-    [1200, 4000, 6000, 6500, 99999],  // Void Master
+    [80, 350, 750, 2500, 99999], // Void
+    [150, 600, 1200, 3000, 99999], // Bronze
+    [250, 900, 1800, 3500, 99999], // Silver
+    [400, 1400, 2600, 4300, 99999], // Gold
+    [600, 2000, 3500, 5300, 99999], // Platinum
+    [800, 2800, 4800, 6300, 99999], // Diamond
+    [1000, 3500, 5500, 7000, 99999], // Master
+    [1200, 4000, 6000, 6500, 99999], // Void Master
   ];
 
-
-  int getCurrentVP() =>
-      Hive.box(_statsBox).get('currentVP', defaultValue: 0);
+  int getCurrentVP() => Hive.box(_statsBox).get('currentVP', defaultValue: 0);
 
   int getCurrentRankIndex() =>
       Hive.box(_statsBox).get('rankIndex', defaultValue: 0);
@@ -75,8 +85,7 @@ class HiveService {
     }
 
     // Descente de rang — pas en dessous de Void
-    while (rankIndex > 0 &&
-        totalVP < rankIndex * vpPerRank) {
+    while (rankIndex > 0 && totalVP < rankIndex * vpPerRank) {
       rankIndex--;
     }
 
@@ -92,16 +101,16 @@ class HiveService {
 
   // ─── Flag Ranked ─────────────────────────────────────────────────────────────
 
-// Seuils correct/total pour -1 / 0 / +1 VP par rang
+  // Seuils correct/total pour -1 / 0 / +1 VP par rang
   static const List<List<int>> _flagVpThresholds = [
-    [3, 5, 10],   // Void       — <3 = -1, 3-4 = 0, >=5 = +1
-    [4, 6, 10],   // Bronze     — <4 = -1, 4-5 = 0, >=6 = +1
-    [4, 6, 10],   // Silver     — <4 = -1, 4-5 = 0, >=6 = +1
-    [5, 7, 10],   // Gold       — <5 = -1, 5-6 = 0, >=7 = +1
-    [5, 7, 10],   // Platinum   — <5 = -1, 5-6 = 0, >=7 = +1
-    [7, 8, 10],   // Diamond    — <7 = -1, 7 = 0, >=8 = +1
-    [8, 9, 10],   // Master     — <8 = -1, 8 = 0, >=9 = +1
-    [9, 10, 10],  // VoidMaster — <9 = -1, 9 = 0, 10 = +1
+    [3, 5, 10], // Void       — <3 = -1, 3-4 = 0, >=5 = +1
+    [4, 6, 10], // Bronze     — <4 = -1, 4-5 = 0, >=6 = +1
+    [4, 6, 10], // Silver     — <4 = -1, 4-5 = 0, >=6 = +1
+    [5, 7, 10], // Gold       — <5 = -1, 5-6 = 0, >=7 = +1
+    [5, 7, 10], // Platinum   — <5 = -1, 5-6 = 0, >=7 = +1
+    [7, 8, 10], // Diamond    — <7 = -1, 7 = 0, >=8 = +1
+    [8, 9, 10], // Master     — <8 = -1, 8 = 0, >=9 = +1
+    [9, 10, 10], // VoidMaster — <9 = -1, 9 = 0, 10 = +1
   ];
 
   Future<void> resetRank() async {
@@ -115,7 +124,8 @@ class HiveService {
     required int totalItems,
   }) async {
     final rankIndex = getCurrentRankIndex();
-    final thresholds = _flagVpThresholds[rankIndex.clamp(0, _flagVpThresholds.length - 1)];
+    final thresholds =
+        _flagVpThresholds[rankIndex.clamp(0, _flagVpThresholds.length - 1)];
 
     int vp;
     if (correctCount < thresholds[0]) {
@@ -205,13 +215,62 @@ class HiveService {
   }
 
   List<Map> getRuns() {
+    return List<Map>.from(Hive.box(_statsBox).get('runs', defaultValue: []));
+  }
+
+  Future<void> saveFlagRun({
+    required int totalScore,
+    required int correctCount,
+    required int totalItems,
+    required int avgTimeSeconds,
+    required List<Map> results,
+  }) async {
+    final box = Hive.box(_statsBox);
+    final runs = List<Map>.from(box.get('flagRuns', defaultValue: []));
+    runs.add({
+      'totalScore': totalScore,
+      'correctCount': correctCount,
+      'totalItems': totalItems,
+      'avgTime': avgTimeSeconds,
+      'results': results,
+      'date': DateTime.now().toIso8601String(),
+    });
+    await box.put('flagRuns', runs);
+  }
+
+  List<Map> getFlagRuns() {
     return List<Map>.from(
-      Hive.box(_statsBox).get('runs', defaultValue: []),
+      Hive.box(_statsBox).get('flagRuns', defaultValue: []),
     );
   }
 
-  int getBestScore() =>
-      Hive.box(_statsBox).get('bestScore', defaultValue: 0);
+  Future<void> saveSpaceRun({
+    required int totalScore,
+    required int totalItems,
+    required int avgTimeSeconds,
+    required double avgDifferenceMillionKm,
+    required List<Map> results,
+  }) async {
+    final box = Hive.box(_statsBox);
+    final runs = List<Map>.from(box.get('spaceRuns', defaultValue: []));
+    runs.add({
+      'totalScore': totalScore,
+      'totalItems': totalItems,
+      'avgTime': avgTimeSeconds,
+      'avgDifference': avgDifferenceMillionKm,
+      'results': results,
+      'date': DateTime.now().toIso8601String(),
+    });
+    await box.put('spaceRuns', runs);
+  }
+
+  List<Map> getSpaceRuns() {
+    return List<Map>.from(
+      Hive.box(_statsBox).get('spaceRuns', defaultValue: []),
+    );
+  }
+
+  int getBestScore() => Hive.box(_statsBox).get('bestScore', defaultValue: 0);
 
   int getBestAvgTime() =>
       Hive.box(_statsBox).get('bestAvgTime', defaultValue: 9999);
@@ -221,8 +280,14 @@ class HiveService {
   double getSuccessRate() {
     final runs = getRuns();
     if (runs.isEmpty) return 0;
-    final totalFound = runs.fold<int>(0, (sum, r) => sum + (r['itemsFound'] as int));
-    final totalItems = runs.fold<int>(0, (sum, r) => sum + (r['totalItems'] as int));
+    final totalFound = runs.fold<int>(
+      0,
+      (sum, r) => sum + (r['itemsFound'] as int),
+    );
+    final totalItems = runs.fold<int>(
+      0,
+      (sum, r) => sum + (r['totalItems'] as int),
+    );
     if (totalItems == 0) return 0;
     return (totalFound / totalItems) * 100;
   }
@@ -230,7 +295,9 @@ class HiveService {
   Map<String, dynamic>? getBestRun() {
     final runs = getRuns();
     if (runs.isEmpty) return null;
-    runs.sort((a, b) => (b['totalScore'] as int).compareTo(a['totalScore'] as int));
+    runs.sort(
+      (a, b) => (b['totalScore'] as int).compareTo(a['totalScore'] as int),
+    );
     return Map<String, dynamic>.from(runs.first);
   }
 
@@ -270,8 +337,9 @@ class HiveService {
   }) async {
     final runs = getRuns();
     final totalRuns = runs.length;
-    final hardcoreRuns = runs.where((r) =>
-        (r['mode'] as String).toLowerCase().contains('hardcore')).length;
+    final hardcoreRuns = runs
+        .where((r) => (r['mode'] as String).toLowerCase().contains('hardcore'))
+        .length;
     final gameRuns = runs.where((r) => r['category'] == 'game').length;
     final movieRuns = runs.where((r) => r['category'] == 'movie').length;
 
@@ -316,6 +384,41 @@ class HiveService {
     }
 
     await _checkTheOne(itemResults);
+  }
+
+  Future<void> checkAndUnlockFlagAchievements({
+    required int totalScore,
+    required int correctCount,
+    required int totalItems,
+    required int avgTime,
+  }) async {
+    final flagRuns = getFlagRuns();
+
+    if (flagRuns.length == 1) await unlockAchievement('first_flag_run');
+    if (flagRuns.length >= 10) await unlockAchievement('flag_veteran');
+    if (correctCount >= 8) await unlockAchievement('flag_sharp');
+    if (correctCount == totalItems) await unlockAchievement('flag_clean_sweep');
+    if (avgTime <= 5) await unlockAchievement('flag_flash');
+  }
+
+  Future<void> checkAndUnlockSpaceAchievements({
+    required int totalScore,
+    required int totalItems,
+    required int avgTime,
+    required List<Map> results,
+  }) async {
+    final spaceRuns = getSpaceRuns();
+
+    if (spaceRuns.length == 1) await unlockAchievement('first_space_run');
+    if (spaceRuns.length >= 10) await unlockAchievement('space_explorer');
+    if (totalScore >= 9000) await unlockAchievement('orbit_master');
+    if (avgTime <= 8) await unlockAchievement('space_fast');
+
+    final hasCloseRound = results.any((result) {
+      final difference = result['differenceMillionKm'];
+      return difference is num && difference <= 10;
+    });
+    if (hasCloseRound) await unlockAchievement('space_close_call');
   }
 
   Future<void> _checkTheOne(List<Map> currentItemResults) async {

@@ -95,6 +95,18 @@ class DuelService {
     await _client.from('matches').update({'status': status}).eq('code', code);
   }
 
+  Future<void> setSelectedGame(String code, String gameKey) async {
+    try {
+      await _client
+          .from('matches')
+          .update({'game_key': gameKey})
+          .eq('code', code);
+    } catch (_) {
+      // Older Supabase schemas do not have game_key yet. Flags remains the
+      // default multiplayer game, so room creation and existing duels stay usable.
+    }
+  }
+
   Future<void> submitRoundResult({
     required String code,
     required String playerId,

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/void_action_button.dart';
 import '../providers/duel_provider.dart';
 
 class DuelResultsScreen extends ConsumerWidget {
@@ -30,7 +31,8 @@ class DuelResultsScreen extends ConsumerWidget {
 
     final meCorrect = me.correctCount;
     final oppCorrect = opp.correctCount;
-    final iWon = meCorrect > oppCorrect ||
+    final iWon =
+        meCorrect > oppCorrect ||
         (meCorrect == oppCorrect && me.avgTime < opp.avgTime);
     final isDraw = meCorrect == oppCorrect && me.avgTime == opp.avgTime;
 
@@ -85,10 +87,7 @@ class DuelResultsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
                   borderRadius: AppTheme.neutralRadius,
-                  border: Border.all(
-                    color: AppTheme.textTertiary,
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: AppTheme.textTertiary, width: 0.5),
                 ),
                 child: Column(
                   children: [
@@ -147,8 +146,10 @@ class DuelResultsScreen extends ConsumerWidget {
                     // Accuracy
                     _CompareRow(
                       label: ref.tr('accuracy'),
-                      myValue: '${((meCorrect / state.totalRounds) * 100).round()}%',
-                      oppValue: '${((oppCorrect / state.totalRounds) * 100).round()}%',
+                      myValue:
+                          '${((meCorrect / state.totalRounds) * 100).round()}%',
+                      oppValue:
+                          '${((oppCorrect / state.totalRounds) * 100).round()}%',
                       myWins: meCorrect > oppCorrect,
                       oppWins: oppCorrect > meCorrect,
                     ),
@@ -159,28 +160,12 @@ class DuelResultsScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // ── Rematch ───────────────────────────────────────────────
-              Pressable(
+              VoidActionButton(
                 onTap: () {
                   ref.read(duelProvider.notifier).leaveRoom();
                   context.go('/duel');
                 },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryDeep,
-                    borderRadius: AppTheme.cardRadius,
-                  ),
-                  child: Text(
-                    ref.tr('play_again'),
-                    textAlign: TextAlign.center,
-                    style: AppTheme.inter(
-                      color: AppTheme.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                label: ref.tr('play_again'),
               ),
               const SizedBox(height: 10),
 
@@ -236,10 +221,7 @@ class _CompareRow extends StatelessWidget {
           width: 80,
           child: Text(
             label,
-            style: AppTheme.inter(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-            ),
+            style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 12),
           ),
         ),
         Expanded(

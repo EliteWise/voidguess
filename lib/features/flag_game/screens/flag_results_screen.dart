@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:voidguess/core/l10n/app_strings.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
+import 'package:voidguess/core/widgets/void_action_button.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rank_progress_bar.dart';
@@ -39,7 +40,6 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
   int _vpBeforeInRank = 0;
   int _rankIndexAfter = 0;
 
-
   @override
   void initState() {
     super.initState();
@@ -47,6 +47,36 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
   }
 
   Future<void> _saveRun() async {
+    final avgTime = widget.results.isEmpty
+        ? 0
+        : widget.results.fold<int>(0, (sum, r) => sum + r.timeSeconds) ~/
+              widget.results.length;
+    final resultMaps = widget.results
+        .map(
+          (result) => {
+            'countryName': result.countryName,
+            'countryCode': result.countryCode,
+            'correct': result.correct,
+            'time': result.timeSeconds,
+            'score': result.score,
+          },
+        )
+        .toList();
+
+    await HiveService().saveFlagRun(
+      totalScore: widget.totalScore,
+      correctCount: widget.correctCount,
+      totalItems: widget.totalItems,
+      avgTimeSeconds: avgTime,
+      results: resultMaps,
+    );
+    await HiveService().checkAndUnlockFlagAchievements(
+      totalScore: widget.totalScore,
+      correctCount: widget.correctCount,
+      totalItems: widget.totalItems,
+      avgTime: avgTime,
+    );
+
     final rankIndexBefore = HiveService().getCurrentRankIndex();
     final vpBeforeInRank = HiveService().getVPInCurrentRank();
     final vp = await HiveService().updateFlagRank(
@@ -86,7 +116,7 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
         ),
       );
     } else {
-      Share.share(text);
+      SharePlus.instance.share(ShareParams(text: text));
     }
   }
 
@@ -143,7 +173,7 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
               if (_vpGained != 0) ...[
                 const SizedBox(height: 24),
                 RankProgressBar(
-                  key: ValueKey('rank_$_rankIndexBefore\_$_vpGained'),
+                  key: ValueKey('rank_${_rankIndexBefore}_$_vpGained'),
                   vpBefore: _vpBeforeInRank,
                   vpGained: _vpGained,
                   rankIndexBefore: _rankIndexBefore,
@@ -159,10 +189,7 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
                   borderRadius: AppTheme.neutralRadius,
-                  border: Border.all(
-                    color: AppTheme.textTertiary,
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: AppTheme.textTertiary, width: 0.5),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -175,17 +202,26 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                       unit: 's',
                       color: _runColor,
                     ),
-                    Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
+                    Container(
+                      width: 0.5,
+                      height: 40,
+                      color: AppTheme.textTertiary,
+                    ),
                     ResultStat(
                       label: ref.tr('correct'),
                       value: '${widget.correctCount}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
-                    Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
+                    Container(
+                      width: 0.5,
+                      height: 40,
+                      color: AppTheme.textTertiary,
+                    ),
                     ResultStat(
                       label: ref.tr('accuracy'),
-                      value: '${((widget.correctCount / widget.totalItems) * 100).round()}',
+                      value:
+                          '${((widget.correctCount / widget.totalItems) * 100).round()}',
                       unit: '%',
                       color: AppTheme.hint,
                     ),
@@ -220,8 +256,8 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                     borderRadius: AppTheme.neutralRadius,
                     border: Border.all(
                       color: result.correct
-                          ? AppTheme.correct.withOpacity(0.5)
-                          : AppTheme.wrong.withOpacity(0.5),
+                          ? AppTheme.correct.withValues(alpha: 0.5)
+                          : AppTheme.wrong.withValues(alpha: 0.5),
                       width: 0.5,
                     ),
                   ),
@@ -246,7 +282,9 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                         child: SizedBox(
                           width: 36,
                           height: 24,
-                          child: CountryFlag.fromCountryCode(result.countryCode),
+                          child: CountryFlag.fromCountryCode(
+                            result.countryCode,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -282,26 +320,10 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
               const SizedBox(height: 32),
 
               // ── Boutons ─────────────────────────────────────────────────
-              Pressable(
+              VoidActionButton(
                 onTap: () => context.go('/flag_game'),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryDeep,
-                    borderRadius: AppTheme.cardRadius,
-                  ),
-                  child: Text(
-                    ref.tr('play_again'),
-                    textAlign: TextAlign.center,
-                    style: AppTheme.inter(
-                      color: AppTheme.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
+                label: ref.tr('play_again'),
+                letterSpacing: 1,
               ),
               const SizedBox(height: 10),
 

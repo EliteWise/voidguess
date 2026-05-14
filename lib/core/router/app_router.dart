@@ -8,6 +8,12 @@ import '../../features/duel/screens/duel_results_screen.dart';
 import '../../features/flag_game/providers/flag_game_provider.dart';
 import '../../features/flag_game/screens/flag_game_screen.dart';
 import '../../features/flag_game/screens/flag_results_screen.dart';
+import '../../features/gemstone_game/providers/gemstone_game_provider.dart';
+import '../../features/gemstone_game/screens/gemstone_game_screen.dart';
+import '../../features/gemstone_game/screens/gemstone_results_screen.dart';
+import '../../features/space_game/screens/space_game_screen.dart';
+import '../../features/space_game/screens/space_results_screen.dart';
+import '../../features/space_game/models/space_round_result.dart';
 import '../../features/game/providers/game_provider.dart';
 import '../../screens/home_screen.dart';
 import '../../features/game/screens/game_screen.dart';
@@ -16,10 +22,7 @@ import '../../features/results/screens/results_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const HomeScreen(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
     GoRoute(
       path: '/game',
       builder: (context, state) {
@@ -45,13 +48,43 @@ final appRouter = GoRouter(
         );
       },
     ),
-    GoRoute(
-      path: '/stats',
-      builder: (context, state) => const StatsScreen(),
-    ),
+    GoRoute(path: '/stats', builder: (context, state) => const StatsScreen()),
     GoRoute(
       path: '/flag_game',
       builder: (context, state) => const FlagGameScreen(),
+    ),
+    GoRoute(
+      path: '/gemstone_game',
+      builder: (context, state) => const GemstoneGameScreen(),
+    ),
+    GoRoute(
+      path: '/gemstone_results',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final results = extra['results'] as List<GemstoneItemResult>? ?? [];
+        return GemstoneResultsScreen(
+          results: results,
+          totalScore: extra['totalScore'] as int? ?? 0,
+          correctCount: extra['correctCount'] as int? ?? 0,
+          totalItems: extra['totalItems'] as int? ?? 0,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/space_game',
+      builder: (context, state) => const SpaceGameScreen(),
+    ),
+    GoRoute(
+      path: '/space_results',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final results = extra['results'] as List<SpaceRoundResult>? ?? [];
+        return SpaceResultsScreen(
+          results: results,
+          totalScore: extra['totalScore'] as int? ?? 0,
+          totalItems: extra['totalItems'] as int? ?? 0,
+        );
+      },
     ),
     GoRoute(
       path: '/flag_results',
@@ -66,10 +99,7 @@ final appRouter = GoRouter(
         );
       },
     ),
-    GoRoute(
-      path: '/duel',
-      builder: (context, state) => const DuelMenuScreen(),
-    ),
+    GoRoute(path: '/duel', builder: (context, state) => const DuelMenuScreen()),
     GoRoute(
       path: '/duel/lobby',
       builder: (context, state) => const DuelLobbyScreen(),

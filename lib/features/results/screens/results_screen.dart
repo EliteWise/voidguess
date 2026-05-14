@@ -8,6 +8,7 @@ import 'package:voidguess/core/l10n/app_strings.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
 import 'package:voidguess/core/widgets/result_stat.dart';
+import 'package:voidguess/core/widgets/void_action_button.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rank_progress_bar.dart';
@@ -53,14 +54,18 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
     final avgTime = widget.itemResults.isEmpty
         ? 0
         : widget.itemResults.fold<int>(0, (sum, r) => sum + r.timeSeconds) ~/
-        widget.itemResults.length;
+              widget.itemResults.length;
 
-    final itemResultsMaps = widget.itemResults.map((r) => {
-      'score': r.score,
-      'time': r.timeSeconds,
-      'found': r.found,
-      'lettersRevealed': r.lettersRevealed,
-    }).toList();
+    final itemResultsMaps = widget.itemResults
+        .map(
+          (r) => {
+            'score': r.score,
+            'time': r.timeSeconds,
+            'found': r.found,
+            'lettersRevealed': r.lettersRevealed,
+          },
+        )
+        .toList();
 
     await HiveService().saveRun(
       totalScore: widget.totalScore,
@@ -87,7 +92,9 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
       final rankIndexBefore = HiveService().getCurrentRankIndex();
       final vpInRankBefore = HiveService().getVPInCurrentRank();
       final vp = await HiveService().updateRank(
-          widget.totalScore, widget.mode.isHardcore);
+        widget.totalScore,
+        widget.mode.isHardcore,
+      );
       setState(() {
         _vpGained = vp;
         _rankIndexBefore = rankIndexBefore;
@@ -194,10 +201,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
                   borderRadius: AppTheme.neutralRadius,
-                  border: Border.all(
-                    color: AppTheme.textTertiary,
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: AppTheme.textTertiary, width: 0.5),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -208,14 +212,22 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                       unit: 'pts',
                       color: _runColor,
                     ),
-                    Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
+                    Container(
+                      width: 0.5,
+                      height: 40,
+                      color: AppTheme.textTertiary,
+                    ),
                     ResultStat(
                       label: ref.tr('found_label'),
                       value: '${widget.itemsFound}',
                       unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
-                    Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
+                    Container(
+                      width: 0.5,
+                      height: 40,
+                      color: AppTheme.textTertiary,
+                    ),
                     ResultStat(
                       label: ref.tr('avg_time'),
                       value: widget.itemResults.isEmpty
@@ -311,28 +323,12 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
               const SizedBox(height: 32),
 
               // ── Boutons ──────────────────────────────────────────────────
-              Pressable(
-                onTap: () => context.go('/game', extra: {
-                  'mode': widget.mode,
-                  'category': widget.category,
-                }),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryDeep,
-                    borderRadius: AppTheme.cardRadius,
-                  ),
-                  child: Text(
-                    ref.tr('play_again'),
-                    textAlign: TextAlign.center,
-                    style: AppTheme.inter(
-                      color: AppTheme.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+              VoidActionButton(
+                onTap: () => context.go(
+                  '/game',
+                  extra: {'mode': widget.mode, 'category': widget.category},
                 ),
+                label: ref.tr('play_again'),
               ),
               const SizedBox(height: 10),
 

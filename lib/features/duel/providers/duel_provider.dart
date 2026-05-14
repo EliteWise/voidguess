@@ -26,6 +26,16 @@ enum DuelPhase { idle, lobby, countdown, playing, finished }
 
 enum DuelRole { host, guest }
 
+class DuelGameOption {
+  final String key;
+  final String labelKey;
+
+  const DuelGameOption({required this.key, required this.labelKey});
+}
+
+const duelGameFlags = DuelGameOption(key: 'flags', labelKey: 'flags');
+const duelGameOptions = [duelGameFlags];
+
 // ─── Player State ───────────────────────────────────────────────────────────
 
 class DuelPlayer {
@@ -62,6 +72,7 @@ class DuelState {
   final DuelPlayer? me;
   final DuelPlayer? opponent;
   final String? error;
+  final String selectedGameKey;
 
   // Jeu en cours
   final List<Country> countries; // les 10 pays de la run
@@ -81,6 +92,7 @@ class DuelState {
     this.me,
     this.opponent,
     this.error,
+    this.selectedGameKey = 'flags',
     this.countries = const [],
     this.options = const [],
     this.roundTypes = const [],
@@ -105,6 +117,10 @@ class DuelState {
   bool get bothReady => (me?.ready ?? false) && (opponent?.ready ?? false);
   int get totalRounds => countries.length;
   bool get isLastRound => currentRound >= totalRounds - 1;
+  DuelGameOption get selectedGame => duelGameOptions.firstWhere(
+    (game) => game.key == selectedGameKey,
+    orElse: () => duelGameFlags,
+  );
 
   DuelState copyWith({
     DuelPhase? phase,
@@ -113,6 +129,7 @@ class DuelState {
     DuelPlayer? me,
     DuelPlayer? opponent,
     String? error,
+    String? selectedGameKey,
     List<Country>? countries,
     List<Country>? options,
     List<int>? roundTypes,
@@ -130,6 +147,7 @@ class DuelState {
       me: me ?? this.me,
       opponent: opponent ?? this.opponent,
       error: error ?? this.error,
+      selectedGameKey: selectedGameKey ?? this.selectedGameKey,
       countries: countries ?? this.countries,
       options: options ?? this.options,
       roundTypes: roundTypes ?? this.roundTypes,
@@ -239,6 +257,14 @@ class DuelNotifier extends StateNotifier<DuelState> {
     await audio.resume();
   }
 
+  Future<void> selectGame(String gameKey) async {
+    if (!state.isHost || state.roomCode == null) return;
+    if (!duelGameOptions.any((game) => game.key == gameKey)) return;
+
+    state = state.copyWith(selectedGameKey: gameKey);
+    await _service.setSelectedGame(state.roomCode!, gameKey);
+  }
+
   // ── Écouter les changements Firebase ──────────────────────────────────
 
   void _listenToRoom(String code) {
@@ -247,6 +273,8 @@ class DuelNotifier extends StateNotifier<DuelState> {
       if (data == null) return;
 
       final status = data['status'] as String;
+      final selectedGameKey =
+          data['game_key'] as String? ?? state.selectedGameKey;
 
       // Parse opponent
       DuelPlayer? opponent;
@@ -300,6 +328,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
             phase: DuelPhase.lobby,
             me: updatedMe,
             opponent: opponent,
+            selectedGameKey: selectedGameKey,
           );
           break;
 
@@ -309,6 +338,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
               phase: DuelPhase.countdown,
               me: updatedMe,
               opponent: opponent,
+              selectedGameKey: selectedGameKey,
               countdownValue: 3,
             );
           }
@@ -325,6 +355,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
               phase: DuelPhase.playing,
               me: updatedMe,
               opponent: opponent,
+              selectedGameKey: selectedGameKey,
             );
             await _loadOptions();
           }
@@ -335,6 +366,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
             phase: DuelPhase.finished,
             me: updatedMe,
             opponent: opponent,
+            selectedGameKey: selectedGameKey,
           );
           break;
       }
@@ -397,6 +429,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
       roomCode: state.roomCode,
       me: state.me,
       opponent: state.opponent,
+      selectedGameKey: state.selectedGameKey,
       countries: state.countries,
       roundTypes: state.roundTypes,
       currentRound: state.currentRound,
