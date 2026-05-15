@@ -59,10 +59,29 @@ class AppStrings {
       'fr': 'Distances planétaires',
       'en': 'Planet distances',
     },
+    'space_distance_game': {
+      'fr': 'Distances moyennes',
+      'en': 'Average distances',
+    },
+    'space_orbit_game': {'fr': 'Ordre orbital', 'en': 'Orbital order'},
+    'space_orbit_game_subtitle': {
+      'fr': 'Glisser la planète entre deux orbites',
+      'en': 'Drag the planet between two orbits',
+    },
     'space_distance_prompt': {
       'fr': 'Distance moyenne entre ces planètes',
       'en': 'Average distance between these planets',
     },
+    'space_orbit_prompt': {
+      'fr': 'Glisse la planète située entre ces deux orbites',
+      'en': 'Drag the planet located between these two orbits',
+    },
+    'space_drag_hint': {
+      'fr': 'Glisse une planète dans la zone centrale',
+      'en': 'Drag a planet into the center zone',
+    },
+    'space_drop_here': {'fr': 'Déposer ici', 'en': 'Drop here'},
+    'space_orbit_title': {'fr': 'Ordre orbital', 'en': 'Orbital order'},
     'space_estimate': {'fr': 'Estimation', 'en': 'Estimate'},
     'space_real_distance': {'fr': 'Distance réelle', 'en': 'Real distance'},
     'space_difference': {'fr': 'Écart', 'en': 'Difference'},
@@ -167,6 +186,7 @@ class AppStrings {
     },
     'selected_game': {'fr': 'Jeu sélectionné', 'en': 'Selected game'},
     'available_now': {'fr': 'Disponible maintenant', 'en': 'Available now'},
+    'selected': {'fr': 'Sélectionné', 'en': 'Selected'},
     'host_only_selection': {
       'fr': 'Seul l\'hôte peut changer la sélection',
       'en': 'Only the host can change the selection',
@@ -211,6 +231,7 @@ class AppStrings {
     'cat_guess': {'fr': 'Titres', 'en': 'Titles'},
     'cat_flags': {'fr': 'Drapeaux', 'en': 'Flags'},
     'cat_space': {'fr': 'Espace', 'en': 'Space'},
+    'cat_gemstones': {'fr': 'Gemmes', 'en': 'Gemstones'},
     'cat_secret': {'fr': 'Secret', 'en': 'Secret'},
   };
 

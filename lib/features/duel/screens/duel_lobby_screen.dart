@@ -119,15 +119,25 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 
               const SizedBox(height: 48),
 
-              _GameSelectionCard(
-                gameLabel: ref.tr(state.selectedGame.labelKey),
-                selectedGameLabel: ref.tr('selected_game'),
-                availableLabel: ref.tr('available_now'),
-                hostOnlyLabel: ref.tr('host_only_selection'),
-                isHost: state.isHost,
-                onTap: () => ref
-                    .read(duelProvider.notifier)
-                    .selectGame(duelGameFlags.key),
+              Column(
+                children: duelGameOptions.map((game) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _GameSelectionCard(
+                      gameLabel: ref.tr(game.labelKey),
+                      selectedGameLabel: ref.tr('selected_game'),
+                      availableLabel: game.key == state.selectedGameKey
+                          ? ref.tr('selected')
+                          : ref.tr('available_now'),
+                      hostOnlyLabel: ref.tr('host_only_selection'),
+                      isHost: state.isHost,
+                      selected: game.key == state.selectedGameKey,
+                      icon: _iconForGame(game.key),
+                      onTap: () =>
+                          ref.read(duelProvider.notifier).selectGame(game.key),
+                    ),
+                  );
+                }).toList(),
               ),
 
               const SizedBox(height: 24),
@@ -197,12 +207,26 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
   }
 }
 
+IconData _iconForGame(String gameKey) {
+  switch (gameKey) {
+    case 'space':
+      return PhosphorIcons.rocketLaunch(PhosphorIconsStyle.regular);
+    case 'gemstones':
+      return PhosphorIcons.diamond(PhosphorIconsStyle.regular);
+    case 'flags':
+    default:
+      return PhosphorIcons.flag(PhosphorIconsStyle.regular);
+  }
+}
+
 class _GameSelectionCard extends StatelessWidget {
   final String gameLabel;
   final String selectedGameLabel;
   final String availableLabel;
   final String hostOnlyLabel;
   final bool isHost;
+  final bool selected;
+  final IconData icon;
   final VoidCallback onTap;
 
   const _GameSelectionCard({
@@ -211,6 +235,8 @@ class _GameSelectionCard extends StatelessWidget {
     required this.availableLabel,
     required this.hostOnlyLabel,
     required this.isHost,
+    required this.selected,
+    required this.icon,
     required this.onTap,
   });
 
@@ -225,8 +251,10 @@ class _GameSelectionCard extends StatelessWidget {
           color: AppTheme.surface,
           borderRadius: AppTheme.neutralRadius,
           border: Border.all(
-            color: AppTheme.primaryDeep.withValues(alpha: 0.35),
-            width: 0.5,
+            color: selected
+                ? AppTheme.primary
+                : AppTheme.primaryDeep.withValues(alpha: 0.35),
+            width: selected ? 1 : 0.5,
           ),
         ),
         child: Row(
@@ -239,11 +267,7 @@ class _GameSelectionCard extends StatelessWidget {
                 borderRadius: AppTheme.chipRadius,
               ),
               child: Center(
-                child: Icon(
-                  PhosphorIcons.flag(PhosphorIconsStyle.regular),
-                  color: AppTheme.primary,
-                  size: 18,
-                ),
+                child: Icon(icon, color: AppTheme.primary, size: 18),
               ),
             ),
             const SizedBox(width: 14),
@@ -331,7 +355,7 @@ class _PlayerRow extends StatelessWidget {
         borderRadius: AppTheme.neutralRadius,
         border: Border.all(
           color: ready
-              ? AppTheme.correct.withOpacity(0.5)
+              ? AppTheme.correct.withValues(alpha: 0.5)
               : AppTheme.textTertiary,
           width: ready ? 1 : 0.5,
         ),

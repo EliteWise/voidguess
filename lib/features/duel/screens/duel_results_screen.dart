@@ -31,10 +31,15 @@ class DuelResultsScreen extends ConsumerWidget {
 
     final meCorrect = me.correctCount;
     final oppCorrect = opp.correctCount;
-    final iWon =
-        meCorrect > oppCorrect ||
-        (meCorrect == oppCorrect && me.avgTime < opp.avgTime);
-    final isDraw = meCorrect == oppCorrect && me.avgTime == opp.avgTime;
+    final compareByScore = state.isSpaceGame;
+    final iWon = compareByScore
+        ? me.totalScore > opp.totalScore ||
+              (me.totalScore == opp.totalScore && me.avgTime < opp.avgTime)
+        : meCorrect > oppCorrect ||
+              (meCorrect == oppCorrect && me.avgTime < opp.avgTime);
+    final isDraw = compareByScore
+        ? me.totalScore == opp.totalScore && me.avgTime == opp.avgTime
+        : meCorrect == oppCorrect && me.avgTime == opp.avgTime;
 
     String resultLabel;
     Color resultColor;
@@ -71,7 +76,7 @@ class DuelResultsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                ref.tr('duel_flags'),
+                '${ref.tr('multiplayer')} · ${ref.tr(state.selectedGame.labelKey)}',
                 style: AppTheme.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 13,
@@ -123,15 +128,25 @@ class DuelResultsScreen extends ConsumerWidget {
                     Container(height: 0.5, color: AppTheme.textTertiary),
                     const SizedBox(height: 16),
 
-                    // Correct
-                    _CompareRow(
-                      label: ref.tr('correct'),
-                      myValue: '$meCorrect / ${state.totalRounds}',
-                      oppValue: '$oppCorrect / ${state.totalRounds}',
-                      myWins: meCorrect > oppCorrect,
-                      oppWins: oppCorrect > meCorrect,
-                    ),
-                    const SizedBox(height: 12),
+                    if (compareByScore) ...[
+                      _CompareRow(
+                        label: ref.tr('score'),
+                        myValue: '${me.totalScore}',
+                        oppValue: '${opp.totalScore}',
+                        myWins: me.totalScore > opp.totalScore,
+                        oppWins: opp.totalScore > me.totalScore,
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      _CompareRow(
+                        label: ref.tr('correct'),
+                        myValue: '$meCorrect / ${state.totalRounds}',
+                        oppValue: '$oppCorrect / ${state.totalRounds}',
+                        myWins: meCorrect > oppCorrect,
+                        oppWins: oppCorrect > meCorrect,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     // Avg time
                     _CompareRow(
@@ -143,16 +158,16 @@ class DuelResultsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Accuracy
-                    _CompareRow(
-                      label: ref.tr('accuracy'),
-                      myValue:
-                          '${((meCorrect / state.totalRounds) * 100).round()}%',
-                      oppValue:
-                          '${((oppCorrect / state.totalRounds) * 100).round()}%',
-                      myWins: meCorrect > oppCorrect,
-                      oppWins: oppCorrect > meCorrect,
-                    ),
+                    if (!compareByScore)
+                      _CompareRow(
+                        label: ref.tr('accuracy'),
+                        myValue:
+                            '${((meCorrect / state.totalRounds) * 100).round()}%',
+                        oppValue:
+                            '${((oppCorrect / state.totalRounds) * 100).round()}%',
+                        myWins: meCorrect > oppCorrect,
+                        oppWins: oppCorrect > meCorrect,
+                      ),
                   ],
                 ),
               ),

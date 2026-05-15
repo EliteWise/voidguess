@@ -6,9 +6,10 @@ import 'package:voidguess/core/theme/app_theme.dart';
 import 'package:voidguess/core/widgets/pressable.dart';
 import 'package:voidguess/core/widgets/result_stat.dart';
 import 'package:voidguess/core/widgets/void_action_button.dart';
+import 'package:voidguess/data/services/hive_service.dart';
 import '../providers/gemstone_game_provider.dart';
 
-class GemstoneResultsScreen extends ConsumerWidget {
+class GemstoneResultsScreen extends ConsumerStatefulWidget {
   final List<GemstoneItemResult> results;
   final int totalScore;
   final int correctCount;
@@ -22,14 +23,59 @@ class GemstoneResultsScreen extends ConsumerWidget {
     required this.totalItems,
   });
 
+  @override
+  ConsumerState<GemstoneResultsScreen> createState() =>
+      _GemstoneResultsScreenState();
+}
+
+class _GemstoneResultsScreenState extends ConsumerState<GemstoneResultsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _saveRun();
+  }
+
+  Future<void> _saveRun() async {
+    final resultMaps = widget.results
+        .map(
+          (result) => {
+            'gemstoneName': result.gemstoneName,
+            'assetPath': result.assetPath,
+            'correct': result.correct,
+            'time': result.timeSeconds,
+            'score': result.score,
+          },
+        )
+        .toList();
+
+    await HiveService().saveGemstoneRun(
+      totalScore: widget.totalScore,
+      correctCount: widget.correctCount,
+      totalItems: widget.totalItems,
+      avgTimeSeconds: _avgTime,
+      results: resultMaps,
+    );
+    await HiveService().checkAndUnlockGemstoneAchievements(
+      totalScore: widget.totalScore,
+      correctCount: widget.correctCount,
+      totalItems: widget.totalItems,
+      avgTime: _avgTime,
+    );
+  }
+
   int get _avgTime {
-    if (results.isEmpty) return 0;
-    return results.fold<int>(0, (sum, result) => sum + result.timeSeconds) ~/
-        results.length;
+    if (widget.results.isEmpty) return 0;
+    return widget.results.fold<int>(
+          0,
+          (sum, result) => sum + result.timeSeconds,
+        ) ~/
+        widget.results.length;
   }
 
   String get _runLabelKey {
-    final ratio = totalItems == 0 ? 0 : correctCount / totalItems;
+    final ratio = widget.totalItems == 0
+        ? 0
+        : widget.correctCount / widget.totalItems;
     if (ratio == 1.0) return 'perfect';
     if (ratio >= 0.8) return 'great_job';
     if (ratio >= 0.5) return 'good_effort';
@@ -37,7 +83,9 @@ class GemstoneResultsScreen extends ConsumerWidget {
   }
 
   Color get _runColor {
-    final ratio = totalItems == 0 ? 0 : correctCount / totalItems;
+    final ratio = widget.totalItems == 0
+        ? 0
+        : widget.correctCount / widget.totalItems;
     if (ratio == 1.0) return AppTheme.correct;
     if (ratio >= 0.8) return AppTheme.primary;
     if (ratio >= 0.5) return AppTheme.hint;
@@ -45,7 +93,7 @@ class GemstoneResultsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -86,7 +134,7 @@ class GemstoneResultsScreen extends ConsumerWidget {
                   children: [
                     ResultStat(
                       label: ref.tr('score'),
-                      value: '$totalScore',
+                      value: '${widget.totalScore}',
                       unit: 'pts',
                       color: _runColor,
                     ),
@@ -97,8 +145,8 @@ class GemstoneResultsScreen extends ConsumerWidget {
                     ),
                     ResultStat(
                       label: ref.tr('correct'),
-                      value: '$correctCount',
-                      unit: '/ $totalItems',
+                      value: '${widget.correctCount}',
+                      unit: '/ ${widget.totalItems}',
                       color: AppTheme.primary,
                     ),
                     Container(
@@ -125,7 +173,7 @@ class GemstoneResultsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              ...results.asMap().entries.map((entry) {
+              ...widget.results.asMap().entries.map((entry) {
                 final index = entry.key;
                 final result = entry.value;
                 return Container(

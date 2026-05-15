@@ -19,8 +19,12 @@ class DuelService {
   Future<String> createRoom({
     required String playerName,
     required int playerRankIndex,
+    required String gameKey,
     required List<int> countryIds,
     required List<int> roundTypes,
+    required List<Map<String, int>> spaceRounds,
+    required List<int> gemstoneIds,
+    required List<int> gemstoneRoundTypes,
   }) async {
     final code = _generateCode();
 
@@ -35,16 +39,24 @@ class DuelService {
       return createRoom(
         playerName: playerName,
         playerRankIndex: playerRankIndex,
+        gameKey: gameKey,
         countryIds: countryIds,
         roundTypes: roundTypes,
+        spaceRounds: spaceRounds,
+        gemstoneIds: gemstoneIds,
+        gemstoneRoundTypes: gemstoneRoundTypes,
       );
     }
 
     await _client.from('matches').insert({
       'code': code,
       'status': 'waiting',
+      'game_key': gameKey,
       'country_ids': countryIds,
       'round_types': roundTypes,
+      'space_rounds': spaceRounds,
+      'gemstone_ids': gemstoneIds,
+      'gemstone_round_types': gemstoneRoundTypes,
       'player_a_name': playerName,
       'player_a_rank_index': playerRankIndex,
       'player_a_ready': false,
@@ -113,6 +125,8 @@ class DuelService {
     required int roundIndex,
     required bool correct,
     required int timeSeconds,
+    int score = 0,
+    double? differenceMillionKm,
   }) async {
     final column = playerId == 'player_a'
         ? 'player_a_results'
@@ -126,7 +140,15 @@ class DuelService {
         .single();
 
     final currentResults = List<Map<String, dynamic>>.from(match[column] ?? []);
-    currentResults.add({'correct': correct, 'timeSeconds': timeSeconds});
+    final result = <String, dynamic>{
+      'correct': correct,
+      'timeSeconds': timeSeconds,
+      'score': score,
+    };
+    if (differenceMillionKm != null) {
+      result['differenceMillionKm'] = differenceMillionKm;
+    }
+    currentResults.add(result);
 
     await _client
         .from('matches')

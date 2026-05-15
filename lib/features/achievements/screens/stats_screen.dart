@@ -182,11 +182,11 @@ class _StatsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hive = HiveService();
-    final bestRun = hive.getBestRun();
     final totalRuns = hive.getTotalRuns();
     final successRate = hive.getSuccessRate();
     final bestScore = hive.getBestScore();
     final bestAvgTime = hive.getBestAvgTime();
+    final bestRuns = _buildBestRuns(ref, hive);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -202,7 +202,7 @@ class _StatsTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (bestRun == null)
+          if (bestRuns.isEmpty)
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -220,123 +220,16 @@ class _StatsTab extends ConsumerWidget {
               ),
             )
           else
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: AppTheme.neutralRadius,
-                border: Border.all(
-                  color: AppTheme.primary.withValues(alpha: 0.2),
-                  width: 0.5,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _StatCard(
-                        label: ref.tr('score'),
-                        value: '${bestRun['totalScore']}',
-                        unit: 'pts',
-                        color: AppTheme.primary,
-                      ),
-                      Container(
-                        width: 0.5,
-                        height: 40,
-                        color: AppTheme.textTertiary,
-                      ),
-                      _StatCard(
-                        label: ref.tr('found_label'),
-                        value: '${bestRun['itemsFound']}',
-                        unit: '/ ${bestRun['totalItems']}',
-                        color: AppTheme.correct,
-                      ),
-                      Container(
-                        width: 0.5,
-                        height: 40,
-                        color: AppTheme.textTertiary,
-                      ),
-                      _StatCard(
-                        label: ref.tr('avg_time'),
-                        value: '${bestRun['avgTime']}',
-                        unit: 's',
-                        color: AppTheme.hint,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryDim,
-                      borderRadius: AppTheme.inputRadius,
-                    ),
-                    child: Text(
-                      (bestRun['mode'] as String).toUpperCase(),
-                      style: AppTheme.inter(
-                        color: AppTheme.primary,
-                        fontSize: 10,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _BestRunsPanel(
+              runs: bestRuns,
+              scoreLabel: ref.tr('score'),
+              defaultProgressLabel: ref.tr('correct'),
+              timeLabel: ref.tr('time'),
             ),
 
-          const SizedBox(height: 32),
-          Text(
-            ref.tr('global'),
-            style: AppTheme.inter(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _GlobalCard(
-                  label: ref.tr('runs_played'),
-                  value: '$totalRuns',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _GlobalCard(
-                  label: ref.tr('success_rate'),
-                  value: successRate.toStringAsFixed(0),
-                  unit: '%',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _GlobalCard(
-                  label: ref.tr('best_score'),
-                  value: '$bestScore',
-                  unit: 'pts',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _GlobalCard(
-                  label: ref.tr('best_avg_time'),
-                  value: bestAvgTime == 9999 ? '--' : '$bestAvgTime',
-                  unit: bestAvgTime == 9999 ? null : 's',
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 28),
+
+          _GlobalCard(label: ref.tr('runs_played'), value: '$totalRuns'),
 
           const SizedBox(height: 40),
           GestureDetector(
@@ -366,56 +259,384 @@ class _StatsTab extends ConsumerWidget {
       ),
     );
   }
+
+  List<_BestRunSummary> _buildBestRuns(WidgetRef ref, HiveService hive) {
+    final summaries = <_BestRunSummary>[];
+    final bestTitleRun = hive.getBestRun();
+    final bestFlagRun = _bestByScore(hive.getFlagRuns());
+    final bestSpaceRun = _bestByScore(hive.getSpaceRuns());
+    final bestGemstoneRun = _bestByScore(hive.getGemstoneRuns());
+
+    if (bestTitleRun != null) {
+      summaries.add(
+        _BestRunSummary(
+          label: ref.tr('cat_guess'),
+          score: bestTitleRun['totalScore'] as int? ?? 0,
+          progressValue: bestTitleRun['itemsFound'] as int? ?? 0,
+          progressTotal: bestTitleRun['totalItems'] as int? ?? 0,
+          avgTime: bestTitleRun['avgTime'] as int? ?? 0,
+        ),
+      );
+    }
+    if (bestFlagRun != null) {
+      summaries.add(
+        _BestRunSummary(
+          label: ref.tr('flags'),
+          score: bestFlagRun['totalScore'] as int? ?? 0,
+          progressValue: bestFlagRun['correctCount'] as int? ?? 0,
+          progressTotal: bestFlagRun['totalItems'] as int? ?? 0,
+          avgTime: bestFlagRun['avgTime'] as int? ?? 0,
+        ),
+      );
+    }
+    if (bestSpaceRun != null) {
+      summaries.add(
+        _BestRunSummary(
+          label: ref.tr('space'),
+          score: bestSpaceRun['totalScore'] as int? ?? 0,
+          progressValue: null,
+          progressTotal: null,
+          avgTime: bestSpaceRun['avgTime'] as int? ?? 0,
+          secondaryLabel: ref.tr('space_avg_error'),
+          secondaryValue:
+              '${((bestSpaceRun['avgDifference'] as num?) ?? 0).round()} M km',
+        ),
+      );
+    }
+    if (bestGemstoneRun != null) {
+      summaries.add(
+        _BestRunSummary(
+          label: ref.tr('gemstones'),
+          score: bestGemstoneRun['totalScore'] as int? ?? 0,
+          progressValue: bestGemstoneRun['correctCount'] as int? ?? 0,
+          progressTotal: bestGemstoneRun['totalItems'] as int? ?? 0,
+          avgTime: bestGemstoneRun['avgTime'] as int? ?? 0,
+        ),
+      );
+    }
+
+    return summaries;
+  }
+
+  Map<String, dynamic>? _bestByScore(List<Map> runs) {
+    if (runs.isEmpty) return null;
+    runs.sort(
+      (a, b) => ((b['totalScore'] as int?) ?? 0).compareTo(
+        (a['totalScore'] as int?) ?? 0,
+      ),
+    );
+    return Map<String, dynamic>.from(runs.first);
+  }
 }
 
-class _StatCard extends StatelessWidget {
+class _BestRunSummary {
+  final String label;
+  final int score;
+  final int? progressValue;
+  final int? progressTotal;
+  final int avgTime;
+  final String? secondaryLabel;
+  final String? secondaryValue;
+
+  const _BestRunSummary({
+    required this.label,
+    required this.score,
+    required this.progressValue,
+    required this.progressTotal,
+    required this.avgTime,
+    this.secondaryLabel,
+    this.secondaryValue,
+  });
+}
+
+class _BestRunsPanel extends StatelessWidget {
+  final List<_BestRunSummary> runs;
+  final String scoreLabel;
+  final String defaultProgressLabel;
+  final String timeLabel;
+
+  const _BestRunsPanel({
+    required this.runs,
+    required this.scoreLabel,
+    required this.defaultProgressLabel,
+    required this.timeLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final best = [...runs]..sort((a, b) => b.score.compareTo(a.score));
+    final topRun = best.first;
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: AppTheme.cardRadius,
+        border: Border.all(
+          color: AppTheme.textTertiary.withValues(alpha: 0.85),
+          width: 0.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(child: CustomPaint(painter: _BestRunsPanelPainter())),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppTheme.background.withValues(alpha: 0.72),
+                        borderRadius: AppTheme.inputRadius,
+                        border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.16),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          PhosphorIcons.chartLineUp(PhosphorIconsStyle.regular),
+                          color: AppTheme.primary,
+                          size: 17,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            topRun.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.inter(
+                              color: AppTheme.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            scoreLabel,
+                            style: AppTheme.inter(
+                              color: AppTheme.textSecondary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${topRun.score}',
+                      style: AppTheme.inter(
+                        color: AppTheme.primary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'pts',
+                      style: AppTheme.inter(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...runs.map((run) {
+                  return _BestRunLine(
+                    run: run,
+                    scoreLabel: scoreLabel,
+                    defaultProgressLabel: defaultProgressLabel,
+                    timeLabel: timeLabel,
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BestRunsPanelPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.45
+      ..color = AppTheme.textTertiary.withValues(alpha: 0.14);
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.round
+      ..color = AppTheme.primaryDeep.withValues(alpha: 0.22);
+    final pointPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = AppTheme.primary.withValues(alpha: 0.28);
+
+    for (double x = 24; x < size.width; x += 42) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 22; y < size.height; y += 34) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    final points = [
+      Offset(size.width * 0.08, size.height * 0.78),
+      Offset(size.width * 0.25, size.height * 0.58),
+      Offset(size.width * 0.43, size.height * 0.66),
+      Offset(size.width * 0.61, size.height * 0.36),
+      Offset(size.width * 0.82, size.height * 0.48),
+      Offset(size.width * 0.94, size.height * 0.28),
+    ];
+
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (final point in points.skip(1)) {
+      path.lineTo(point.dx, point.dy);
+    }
+    canvas.drawPath(path, linePaint);
+    for (final point in points) {
+      canvas.drawCircle(point, 2.4, pointPaint);
+    }
+
+    final wash = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [
+          AppTheme.primaryDeep.withValues(alpha: 0.10),
+          Colors.transparent,
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, wash);
+  }
+
+  @override
+  bool shouldRepaint(_BestRunsPanelPainter oldDelegate) => false;
+}
+
+class _BestRunLine extends StatelessWidget {
+  final _BestRunSummary run;
+  final String scoreLabel;
+  final String defaultProgressLabel;
+  final String timeLabel;
+
+  const _BestRunLine({
+    required this.run,
+    required this.scoreLabel,
+    required this.defaultProgressLabel,
+    required this.timeLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = run.progressValue != null && run.progressTotal != null
+        ? '${run.progressValue}/${run.progressTotal}'
+        : run.secondaryValue ?? '--';
+    final progressLabel = run.progressValue != null
+        ? defaultProgressLabel
+        : run.secondaryLabel ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 28,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryDeep.withValues(alpha: 0.85),
+              borderRadius: AppTheme.inputRadius,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 4,
+            child: Text(
+              run.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.inter(
+                color: AppTheme.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: _InlineMetric(
+              label: scoreLabel,
+              value: '${run.score}',
+              color: AppTheme.primary,
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: _InlineMetric(
+              label: progressLabel,
+              value: progress,
+              color: AppTheme.correct,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: _InlineMetric(
+              label: timeLabel,
+              value: '${run.avgTime}s',
+              color: AppTheme.hint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineMetric extends StatelessWidget {
   final String label;
   final String value;
-  final String unit;
   final Color color;
 
-  const _StatCard({
+  const _InlineMetric({
     required this.label,
     required this.value,
-    required this.unit,
     required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              value,
-              style: AppTheme.inter(
-                color: color,
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(width: 3),
-            Text(
-              unit,
-              style: AppTheme.inter(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ],
+        Text(
+          value,
+          textAlign: TextAlign.right,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTheme.inter(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        const SizedBox(height: 2),
         Text(
           label,
-          style: AppTheme.inter(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-            letterSpacing: 0.3,
-          ),
+          textAlign: TextAlign.right,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 8),
         ),
       ],
     );
@@ -432,6 +653,7 @@ class _GlobalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      alignment: Alignment.center,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
@@ -439,33 +661,27 @@ class _GlobalCard extends StatelessWidget {
         border: Border.all(color: AppTheme.textTertiary, width: 0.5),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: AppTheme.inter(
-                  color: AppTheme.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              if (unit != null) ...[
-                const SizedBox(width: 3),
-                Text(
-                  unit!,
-                  style: AppTheme.inter(
-                    color: AppTheme.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ],
+          Text(
+            value,
+            style: AppTheme.inter(
+              color: AppTheme.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+            ),
           ),
+          if (unit != null) ...[
+            const SizedBox(width: 3),
+            Text(
+              unit!,
+              style: AppTheme.inter(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ],
           const SizedBox(height: 4),
           Text(
             label,
@@ -518,6 +734,7 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
     'guess': 'cat_guess',
     'flags': 'cat_flags',
     'space': 'cat_space',
+    'gemstones': 'cat_gemstones',
     'secret': 'cat_secret',
   };
 
@@ -532,7 +749,7 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
       );
     }
 
-    const categories = ['guess', 'flags', 'space', 'secret'];
+    const categories = ['guess', 'flags', 'space', 'gemstones', 'secret'];
     final totalUnlocked = _achievements
         .where((achievement) => _unlocked.contains(achievement.id))
         .length;

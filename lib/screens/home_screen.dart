@@ -206,6 +206,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).then((_) => _loadRank());
   }
 
+  void _showSpaceSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const _SpaceSheet(),
+    ).then((_) => _loadRank());
+  }
+
   @override
   Widget build(BuildContext context) {
     final rankName = HiveService.rankNames[_rankIndex];
@@ -337,7 +348,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 icon: PhosphorIcons.rocketLaunch(
                                   PhosphorIconsStyle.regular,
                                 ),
-                                onTap: () => context.go('/space_game'),
+                                onTap: () => _showSpaceSheet(context),
                               ),
                             ),
                           ],
@@ -350,10 +361,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 label: ref.tr('gemstones'),
                                 subtitle: ref.tr('gemstones_subtitle_compact'),
                                 icon: PhosphorIcons.diamond(
-                                PhosphorIconsStyle.regular,
+                                  PhosphorIconsStyle.regular,
+                                ),
+                                onTap: () => context.go('/gemstone_game'),
                               ),
-                              onTap: () => context.go('/gemstone_game'),
-                            ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -364,7 +375,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   PhosphorIconsStyle.regular,
                                 ),
                               ),
-                            )
+                            ),
                           ],
                         ),
                         const SizedBox(height: 14),
@@ -613,9 +624,7 @@ class _SoloGameTile extends StatelessWidget {
               color: AppTheme.primaryDim,
               borderRadius: AppTheme.chipRadius,
             ),
-            child: Center(
-              child: Icon(icon, color: AppTheme.primary, size: 17),
-            ),
+            child: Center(child: Icon(icon, color: AppTheme.primary, size: 17)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1126,6 +1135,130 @@ class _FlagSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
         ],
+      ),
+    );
+  }
+}
+
+class _SpaceSheet extends ConsumerWidget {
+  const _SpaceSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 32,
+              height: 3,
+              decoration: BoxDecoration(
+                color: AppTheme.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            ref.tr('space'),
+            style: AppTheme.inter(
+              color: AppTheme.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          _SpaceModeCard(
+            title: ref.tr('space_distance_game'),
+            subtitle: ref.tr('space_subtitle_compact'),
+            icon: Icons.public_rounded,
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/space_game');
+            },
+          ),
+          const SizedBox(height: 10),
+          _SpaceModeCard(
+            title: ref.tr('space_orbit_game'),
+            subtitle: ref.tr('space_orbit_game_subtitle'),
+            icon: Icons.swap_vert_rounded,
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/space_orbit_game');
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpaceModeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _SpaceModeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: AppTheme.chipRadius,
+          border: Border.all(color: AppTheme.textTertiary, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryDim,
+                borderRadius: AppTheme.chipRadius,
+              ),
+              child: Icon(icon, color: AppTheme.primary, size: 18),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTheme.inter(
+                      color: AppTheme.primary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTheme.inter(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

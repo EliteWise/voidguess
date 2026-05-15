@@ -12,6 +12,7 @@ import '../../features/gemstone_game/providers/gemstone_game_provider.dart';
 import '../../features/gemstone_game/screens/gemstone_game_screen.dart';
 import '../../features/gemstone_game/screens/gemstone_results_screen.dart';
 import '../../features/space_game/screens/space_game_screen.dart';
+import '../../features/space_game/screens/space_orbit_game_screen.dart';
 import '../../features/space_game/screens/space_results_screen.dart';
 import '../../features/space_game/models/space_round_result.dart';
 import '../../features/game/providers/game_provider.dart';
@@ -73,6 +74,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/space_game',
       builder: (context, state) => const SpaceGameScreen(),
+    ),
+    GoRoute(
+      path: '/space_orbit_game',
+      builder: (context, state) => const SpaceOrbitGameScreen(),
     ),
     GoRoute(
       path: '/space_results',

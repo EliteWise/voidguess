@@ -9,6 +9,7 @@ import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/theme/app_theme.dart';
 import 'package:voidguess/core/widgets/pressable.dart';
 import 'package:voidguess/core/widgets/void_action_button.dart';
+import 'package:voidguess/features/space_game/models/space_planet.dart';
 import 'package:voidguess/features/space_game/models/space_round_result.dart';
 
 class SpaceGameScreen extends ConsumerStatefulWidget {
@@ -27,8 +28,8 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   final Random _random = Random();
   final List<SpaceRoundResult> _results = [];
   Timer? _tickTimer;
-  late _Planet _leftPlanet;
-  late _Planet _rightPlanet;
+  late SpacePlanet _leftPlanet;
+  late SpacePlanet _rightPlanet;
   double _guessMillionKm = 1000;
   int _roundIndex = 0;
   int _totalScore = 0;
@@ -43,7 +44,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   }
 
   double get _actualDistanceMillionKm {
-    return (_leftPlanet.orbitMillionKm - _rightPlanet.orbitMillionKm).abs();
+    return averagePlanetDistanceMillionKm(_leftPlanet, _rightPlanet);
   }
 
   double get _differenceMillionKm {
@@ -60,7 +61,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   }
 
   void _pickPair() {
-    final planets = [..._planets]..shuffle(_random);
+    final planets = [...spacePlanets]..shuffle(_random);
     _leftPlanet = planets[0];
     _rightPlanet = planets[1];
     _guessMillionKm = 1000;
@@ -341,7 +342,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
 }
 
 class _PlanetCard extends StatelessWidget {
-  final _Planet planet;
+  final SpacePlanet planet;
   final double height;
 
   const _PlanetCard({required this.planet, required this.height});
@@ -524,58 +525,3 @@ class _ResultValue extends StatelessWidget {
     );
   }
 }
-
-class _Planet {
-  final String name;
-  final String assetPath;
-  final double orbitMillionKm;
-
-  const _Planet({
-    required this.name,
-    required this.assetPath,
-    required this.orbitMillionKm,
-  });
-}
-
-const List<_Planet> _planets = [
-  _Planet(
-    name: 'Mercure',
-    assetPath: 'assets/planets/mercury.png',
-    orbitMillionKm: 57.9,
-  ),
-  _Planet(
-    name: 'Vénus',
-    assetPath: 'assets/planets/venus.png',
-    orbitMillionKm: 108.2,
-  ),
-  _Planet(
-    name: 'Terre',
-    assetPath: 'assets/planets/earth.png',
-    orbitMillionKm: 149.6,
-  ),
-  _Planet(
-    name: 'Mars',
-    assetPath: 'assets/planets/mars.png',
-    orbitMillionKm: 227.9,
-  ),
-  _Planet(
-    name: 'Jupiter',
-    assetPath: 'assets/planets/jupiter.png',
-    orbitMillionKm: 778.6,
-  ),
-  _Planet(
-    name: 'Saturne',
-    assetPath: 'assets/planets/saturn.png',
-    orbitMillionKm: 1433.5,
-  ),
-  _Planet(
-    name: 'Uranus',
-    assetPath: 'assets/planets/uranus.png',
-    orbitMillionKm: 2872.5,
-  ),
-  _Planet(
-    name: 'Neptune',
-    assetPath: 'assets/planets/neptune.png',
-    orbitMillionKm: 4495.1,
-  ),
-];

@@ -270,6 +270,32 @@ class HiveService {
     );
   }
 
+  Future<void> saveGemstoneRun({
+    required int totalScore,
+    required int correctCount,
+    required int totalItems,
+    required int avgTimeSeconds,
+    required List<Map> results,
+  }) async {
+    final box = Hive.box(_statsBox);
+    final runs = List<Map>.from(box.get('gemstoneRuns', defaultValue: []));
+    runs.add({
+      'totalScore': totalScore,
+      'correctCount': correctCount,
+      'totalItems': totalItems,
+      'avgTime': avgTimeSeconds,
+      'results': results,
+      'date': DateTime.now().toIso8601String(),
+    });
+    await box.put('gemstoneRuns', runs);
+  }
+
+  List<Map> getGemstoneRuns() {
+    return List<Map>.from(
+      Hive.box(_statsBox).get('gemstoneRuns', defaultValue: []),
+    );
+  }
+
   int getBestScore() => Hive.box(_statsBox).get('bestScore', defaultValue: 0);
 
   int getBestAvgTime() =>
@@ -396,9 +422,13 @@ class HiveService {
 
     if (flagRuns.length == 1) await unlockAchievement('first_flag_run');
     if (flagRuns.length >= 10) await unlockAchievement('flag_veteran');
+    if (flagRuns.length >= 50) await unlockAchievement('flag_marathon');
     if (correctCount >= 8) await unlockAchievement('flag_sharp');
     if (correctCount == totalItems) await unlockAchievement('flag_clean_sweep');
     if (avgTime <= 5) await unlockAchievement('flag_flash');
+    if (correctCount == totalItems && avgTime <= 3) {
+      await unlockAchievement('flag_grandmaster');
+    }
   }
 
   Future<void> checkAndUnlockSpaceAchievements({
@@ -411,6 +441,7 @@ class HiveService {
 
     if (spaceRuns.length == 1) await unlockAchievement('first_space_run');
     if (spaceRuns.length >= 10) await unlockAchievement('space_explorer');
+    if (spaceRuns.length >= 50) await unlockAchievement('space_grand_tour');
     if (totalScore >= 9000) await unlockAchievement('orbit_master');
     if (avgTime <= 8) await unlockAchievement('space_fast');
 
@@ -419,6 +450,33 @@ class HiveService {
       return difference is num && difference <= 10;
     });
     if (hasCloseRound) await unlockAchievement('space_close_call');
+
+    final hasPinpointRound = results.any((result) {
+      final difference = result['differenceMillionKm'];
+      return difference is num && difference <= 2;
+    });
+    if (hasPinpointRound) await unlockAchievement('space_pinpoint');
+  }
+
+  Future<void> checkAndUnlockGemstoneAchievements({
+    required int totalScore,
+    required int correctCount,
+    required int totalItems,
+    required int avgTime,
+  }) async {
+    final gemstoneRuns = getGemstoneRuns();
+
+    if (gemstoneRuns.length == 1) await unlockAchievement('first_gemstone_run');
+    if (gemstoneRuns.length >= 10) await unlockAchievement('gemstone_veteran');
+    if (gemstoneRuns.length >= 50) await unlockAchievement('gemstone_marathon');
+    if (correctCount >= 8) await unlockAchievement('gemstone_sharp');
+    if (correctCount == totalItems) {
+      await unlockAchievement('gemstone_clean_sweep');
+    }
+    if (avgTime <= 5) await unlockAchievement('gemstone_flash');
+    if (correctCount == totalItems && avgTime <= 3) {
+      await unlockAchievement('gemstone_grandmaster');
+    }
   }
 
   Future<void> _checkTheOne(List<Map> currentItemResults) async {
