@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 
@@ -88,7 +87,7 @@ class AchievementNotification extends StatelessWidget {
                                 ),
                               ),
                               child: Icon(
-                                PhosphorIcons.trophy(PhosphorIconsStyle.fill),
+                                Icons.emoji_events_rounded,
                                 color: AppTheme.hint,
                                 size: 22,
                               ),
@@ -142,7 +141,7 @@ class AchievementNotification extends StatelessWidget {
                                 child: Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: Icon(
-                                    PhosphorIcons.x(PhosphorIconsStyle.bold),
+                                    Icons.close_rounded,
                                     color: AppTheme.textSecondary,
                                     size: 16,
                                   ),
