@@ -301,7 +301,12 @@ class HiveService {
   int getBestAvgTime() =>
       Hive.box(_statsBox).get('bestAvgTime', defaultValue: 9999);
 
-  int getTotalRuns() => getRuns().length;
+  int getTotalRuns() {
+    return getRuns().length +
+        getFlagRuns().length +
+        getSpaceRuns().length +
+        getGemstoneRuns().length;
+  }
 
   double getSuccessRate() {
     final runs = getRuns();
@@ -329,13 +334,19 @@ class HiveService {
 
   // ─── Achievements ────────────────────────────────────────
 
-  Future<void> unlockAchievement(String id) async {
+  Future<bool> unlockAchievement(String id) async {
     final box = Hive.box(_achievementsBox);
     final unlocked = List<String>.from(box.get('unlocked', defaultValue: []));
-    if (!unlocked.contains(id)) {
-      unlocked.add(id);
-      await box.put('unlocked', unlocked);
-    }
+    if (unlocked.contains(id)) return false;
+
+    unlocked.add(id);
+    await box.put('unlocked', unlocked);
+    return true;
+  }
+
+  Future<void> _unlockAndCollect(List<String> unlockedIds, String id) async {
+    final unlockedNow = await unlockAchievement(id);
+    if (unlockedNow) unlockedIds.add(id);
   }
 
   bool isUnlocked(String id) {
@@ -351,7 +362,7 @@ class HiveService {
     );
   }
 
-  Future<void> checkAndUnlockAchievements({
+  Future<List<String>> checkAndUnlockAchievements({
     required int totalScore,
     required int itemsFound,
     required int totalItems,
@@ -368,118 +379,167 @@ class HiveService {
         .length;
     final gameRuns = runs.where((r) => r['category'] == 'game').length;
     final movieRuns = runs.where((r) => r['category'] == 'movie').length;
+    final unlockedIds = <String>[];
 
-    if (totalRuns == 1) await unlockAchievement('first_run');
-    if (totalRuns >= 10) await unlockAchievement('veteran');
-    if (totalRuns >= 50) await unlockAchievement('legend');
-    if (totalRuns >= 100) await unlockAchievement('void_walker');
+    if (totalRuns == 1) await _unlockAndCollect(unlockedIds, 'first_run');
+    if (totalRuns >= 10) await _unlockAndCollect(unlockedIds, 'veteran');
+    if (totalRuns >= 50) await _unlockAndCollect(unlockedIds, 'legend');
+    if (totalRuns >= 100) await _unlockAndCollect(unlockedIds, 'void_walker');
 
     if (isHardcore && itemsFound == totalItems) {
-      await unlockAchievement('hardcore_survivor');
+      await _unlockAndCollect(unlockedIds, 'hardcore_survivor');
     }
-    if (hardcoreRuns >= 10) await unlockAchievement('void_master');
+    if (hardcoreRuns >= 10) await _unlockAndCollect(unlockedIds, 'void_master');
 
     if (itemsFound == totalItems && totalItems == 10) {
-      await unlockAchievement('perfect_run');
+      await _unlockAndCollect(unlockedIds, 'perfect_run');
     }
 
     if (!usedHint && itemsFound == totalItems) {
-      await unlockAchievement('no_hint');
+      await _unlockAndCollect(unlockedIds, 'no_hint');
     }
     if (!usedHint && itemsFound == totalItems && totalItems == 10) {
-      await unlockAchievement('blindfolded');
+      await _unlockAndCollect(unlockedIds, 'blindfolded');
     }
 
-    if (totalScore >= 5000) await unlockAchievement('grand_total');
-    if (avgTime <= 8) await unlockAchievement('no_time_to_think');
-    if (gameRuns >= 5) await unlockAchievement('gamer');
-    if (movieRuns >= 5) await unlockAchievement('cinephile');
-    if (gameRuns >= 1 && movieRuns >= 1) await unlockAchievement('cultured');
+    if (totalScore >= 5000) await _unlockAndCollect(unlockedIds, 'grand_total');
+    if (avgTime <= 8) {
+      await _unlockAndCollect(unlockedIds, 'no_time_to_think');
+    }
+    if (gameRuns >= 5) await _unlockAndCollect(unlockedIds, 'gamer');
+    if (movieRuns >= 5) await _unlockAndCollect(unlockedIds, 'cinephile');
+    if (gameRuns >= 1 && movieRuns >= 1) {
+      await _unlockAndCollect(unlockedIds, 'cultured');
+    }
 
     for (final result in itemResults) {
       final score = result['score'] as int? ?? 0;
       final time = result['time'] as int? ?? 99;
       final lettersRevealed = result['lettersRevealed'] as int? ?? 99;
 
-      if (time <= 3) await unlockAchievement('speed_demon');
-      if (time <= 5) await unlockAchievement('flash');
-      if (score >= 800) await unlockAchievement('high_scorer');
-      if (score >= 1000) await unlockAchievement('perfect_score');
-      if (lettersRevealed <= 1) await unlockAchievement('first_letter');
-      if (lettersRevealed <= 2) await unlockAchievement('second_letter');
+      if (time <= 3) await _unlockAndCollect(unlockedIds, 'speed_demon');
+      if (time <= 5) await _unlockAndCollect(unlockedIds, 'flash');
+      if (score >= 800) await _unlockAndCollect(unlockedIds, 'high_scorer');
+      if (score >= 1000) {
+        await _unlockAndCollect(unlockedIds, 'perfect_score');
+      }
+      if (lettersRevealed <= 1) {
+        await _unlockAndCollect(unlockedIds, 'first_letter');
+      }
+      if (lettersRevealed <= 2) {
+        await _unlockAndCollect(unlockedIds, 'second_letter');
+      }
     }
 
-    await _checkTheOne(itemResults);
+    final unlockedTheOne = await _checkTheOne(itemResults);
+    if (unlockedTheOne != null) unlockedIds.add(unlockedTheOne);
+
+    return unlockedIds;
   }
 
-  Future<void> checkAndUnlockFlagAchievements({
+  Future<List<String>> checkAndUnlockFlagAchievements({
     required int totalScore,
     required int correctCount,
     required int totalItems,
     required int avgTime,
   }) async {
     final flagRuns = getFlagRuns();
+    final unlockedIds = <String>[];
 
-    if (flagRuns.length == 1) await unlockAchievement('first_flag_run');
-    if (flagRuns.length >= 10) await unlockAchievement('flag_veteran');
-    if (flagRuns.length >= 50) await unlockAchievement('flag_marathon');
-    if (correctCount >= 8) await unlockAchievement('flag_sharp');
-    if (correctCount == totalItems) await unlockAchievement('flag_clean_sweep');
-    if (avgTime <= 5) await unlockAchievement('flag_flash');
-    if (correctCount == totalItems && avgTime <= 3) {
-      await unlockAchievement('flag_grandmaster');
+    if (flagRuns.length == 1) {
+      await _unlockAndCollect(unlockedIds, 'first_flag_run');
     }
+    if (flagRuns.length >= 10) {
+      await _unlockAndCollect(unlockedIds, 'flag_veteran');
+    }
+    if (flagRuns.length >= 50) {
+      await _unlockAndCollect(unlockedIds, 'flag_marathon');
+    }
+    if (correctCount >= 8) await _unlockAndCollect(unlockedIds, 'flag_sharp');
+    if (correctCount == totalItems) {
+      await _unlockAndCollect(unlockedIds, 'flag_clean_sweep');
+    }
+    if (avgTime <= 5) await _unlockAndCollect(unlockedIds, 'flag_flash');
+    if (correctCount == totalItems && avgTime <= 3) {
+      await _unlockAndCollect(unlockedIds, 'flag_grandmaster');
+    }
+
+    return unlockedIds;
   }
 
-  Future<void> checkAndUnlockSpaceAchievements({
+  Future<List<String>> checkAndUnlockSpaceAchievements({
     required int totalScore,
     required int totalItems,
     required int avgTime,
     required List<Map> results,
   }) async {
     final spaceRuns = getSpaceRuns();
+    final unlockedIds = <String>[];
 
-    if (spaceRuns.length == 1) await unlockAchievement('first_space_run');
-    if (spaceRuns.length >= 10) await unlockAchievement('space_explorer');
-    if (spaceRuns.length >= 50) await unlockAchievement('space_grand_tour');
-    if (totalScore >= 9000) await unlockAchievement('orbit_master');
-    if (avgTime <= 8) await unlockAchievement('space_fast');
+    if (spaceRuns.length == 1) {
+      await _unlockAndCollect(unlockedIds, 'first_space_run');
+    }
+    if (spaceRuns.length >= 10) {
+      await _unlockAndCollect(unlockedIds, 'space_explorer');
+    }
+    if (spaceRuns.length >= 50) {
+      await _unlockAndCollect(unlockedIds, 'space_grand_tour');
+    }
+    if (totalScore >= 9000) {
+      await _unlockAndCollect(unlockedIds, 'orbit_master');
+    }
+    if (avgTime <= 8) await _unlockAndCollect(unlockedIds, 'space_fast');
 
     final hasCloseRound = results.any((result) {
       final difference = result['differenceMillionKm'];
       return difference is num && difference <= 10;
     });
-    if (hasCloseRound) await unlockAchievement('space_close_call');
+    if (hasCloseRound) await _unlockAndCollect(unlockedIds, 'space_close_call');
 
     final hasPinpointRound = results.any((result) {
       final difference = result['differenceMillionKm'];
       return difference is num && difference <= 2;
     });
-    if (hasPinpointRound) await unlockAchievement('space_pinpoint');
+    if (hasPinpointRound) {
+      await _unlockAndCollect(unlockedIds, 'space_pinpoint');
+    }
+
+    return unlockedIds;
   }
 
-  Future<void> checkAndUnlockGemstoneAchievements({
+  Future<List<String>> checkAndUnlockGemstoneAchievements({
     required int totalScore,
     required int correctCount,
     required int totalItems,
     required int avgTime,
   }) async {
     final gemstoneRuns = getGemstoneRuns();
+    final unlockedIds = <String>[];
 
-    if (gemstoneRuns.length == 1) await unlockAchievement('first_gemstone_run');
-    if (gemstoneRuns.length >= 10) await unlockAchievement('gemstone_veteran');
-    if (gemstoneRuns.length >= 50) await unlockAchievement('gemstone_marathon');
-    if (correctCount >= 8) await unlockAchievement('gemstone_sharp');
+    if (gemstoneRuns.length == 1) {
+      await _unlockAndCollect(unlockedIds, 'first_gemstone_run');
+    }
+    if (gemstoneRuns.length >= 10) {
+      await _unlockAndCollect(unlockedIds, 'gemstone_veteran');
+    }
+    if (gemstoneRuns.length >= 50) {
+      await _unlockAndCollect(unlockedIds, 'gemstone_marathon');
+    }
+    if (correctCount >= 8) {
+      await _unlockAndCollect(unlockedIds, 'gemstone_sharp');
+    }
     if (correctCount == totalItems) {
-      await unlockAchievement('gemstone_clean_sweep');
+      await _unlockAndCollect(unlockedIds, 'gemstone_clean_sweep');
     }
-    if (avgTime <= 5) await unlockAchievement('gemstone_flash');
+    if (avgTime <= 5) await _unlockAndCollect(unlockedIds, 'gemstone_flash');
     if (correctCount == totalItems && avgTime <= 3) {
-      await unlockAchievement('gemstone_grandmaster');
+      await _unlockAndCollect(unlockedIds, 'gemstone_grandmaster');
     }
+
+    return unlockedIds;
   }
 
-  Future<void> _checkTheOne(List<Map> currentItemResults) async {
+  Future<String?> _checkTheOne(List<Map> currentItemResults) async {
     final allResults = <Map>[];
     for (final run in getRuns()) {
       final results = List<Map>.from(run['itemResults'] as List? ?? []);
@@ -492,13 +552,15 @@ class HiveService {
       if ((result['score'] as int? ?? 0) >= 1000) {
         consecutive++;
         if (consecutive >= 5) {
-          await unlockAchievement('the_one');
-          return;
+          final unlockedNow = await unlockAchievement('the_one');
+          return unlockedNow ? 'the_one' : null;
         }
       } else {
         consecutive = 0;
       }
     }
+
+    return null;
   }
 
   // Player Infos
