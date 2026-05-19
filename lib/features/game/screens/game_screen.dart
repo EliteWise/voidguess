@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/provider/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -269,7 +268,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+                      Icons.arrow_forward,
                       color: AppTheme.primary,
                       size: 18,
                     ),
@@ -321,7 +320,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
+                          Icons.lightbulb_outline,
                           color: AppTheme.hint,
                           size: 14,
                         ),

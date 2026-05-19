@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:voidguess/core/l10n/app_strings.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
@@ -28,7 +27,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
+            Icons.arrow_back,
             color: AppTheme.textSecondary,
           ),
           onPressed: () => context.go('/'),
@@ -399,7 +398,7 @@ class _BestRunsPanel extends StatelessWidget {
                       ),
                       child: Center(
                         child: Icon(
-                          PhosphorIcons.chartLineUp(PhosphorIconsStyle.regular),
+                          Icons.trending_up,
                           color: AppTheme.primary,
                           size: 17,
                         ),
@@ -837,8 +836,8 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
                         ),
                         child: Icon(
                           isUnlocked
-                              ? PhosphorIcons.trophy(PhosphorIconsStyle.regular)
-                              : PhosphorIcons.lock(PhosphorIconsStyle.regular),
+                              ? Icons.emoji_events
+                              : Icons.lock_outline,
                           color: isUnlocked
                               ? AppTheme.primary
                               : AppTheme.textSecondary,
@@ -887,7 +886,7 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
                       ),
                       if (isUnlocked)
                         Icon(
-                          PhosphorIcons.checkCircle(PhosphorIconsStyle.regular),
+                          Icons.check_circle_outline,
                           color: AppTheme.correct,
                           size: 16,
                         ),

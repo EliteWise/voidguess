@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/theme/app_theme.dart';
 import 'package:voidguess/core/widgets/pressable.dart';
@@ -168,7 +167,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
             child: Pressable(
               onTap: () => context.go('/'),
               child: Icon(
-                PhosphorIcons.x(PhosphorIconsStyle.bold),
+                Icons.close,
                 color: AppTheme.textSecondary,
                 size: 18,
               ),

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/widgets/rank_emblem.dart';
 import 'package:voidguess/core/widgets/void_action_button.dart';
@@ -210,12 +209,12 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 IconData _iconForGame(String gameKey) {
   switch (gameKey) {
     case 'space':
-      return PhosphorIcons.rocketLaunch(PhosphorIconsStyle.regular);
+      return Icons.rocket_launch;
     case 'gemstones':
-      return PhosphorIcons.diamond(PhosphorIconsStyle.regular);
+      return Icons.diamond;
     case 'flags':
     default:
-      return PhosphorIcons.flag(PhosphorIconsStyle.regular);
+      return Icons.flag;
   }
 }
 

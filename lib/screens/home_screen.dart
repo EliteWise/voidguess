@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:voidguess/core/l10n/app_strings.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
@@ -260,10 +259,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       width: 0.5,
                                     ),
                                   ),
-                                  child: PhosphorIcon(
-                                    PhosphorIcons.musicNote(
-                                      PhosphorIconsStyle.thin,
-                                    ),
+                                  child: Icon(
+                                    Icons.music_note,
                                   ),
                                 ),
                               ),
@@ -308,9 +305,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: _SoloGameTile(
                                 label: ref.tr('video_games'),
                                 subtitle: ref.tr('mode_subtitle_compact'),
-                                icon: PhosphorIcons.gameController(
-                                  PhosphorIconsStyle.regular,
-                                ),
+                                icon: Icons.sports_esports,
                                 onTap: () => _showModeSheet(context, 'game'),
                               ),
                             ),
@@ -319,9 +314,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: _SoloGameTile(
                                 label: ref.tr('movies'),
                                 subtitle: ref.tr('mode_subtitle_compact'),
-                                icon: PhosphorIcons.filmSlate(
-                                  PhosphorIconsStyle.regular,
-                                ),
+                                icon: Icons.movie,
                                 onTap: () => _showModeSheet(context, 'movie'),
                               ),
                             ),
@@ -334,9 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: _SoloGameTile(
                                 label: ref.tr('flags'),
                                 subtitle: ref.tr('solo_ranked_compact'),
-                                icon: PhosphorIcons.flag(
-                                  PhosphorIconsStyle.regular,
-                                ),
+                                icon: Icons.flag,
                                 onTap: () => _showFlagSheet(context),
                               ),
                             ),
@@ -345,9 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: _SoloGameTile(
                                 label: ref.tr('space'),
                                 subtitle: ref.tr('space_subtitle_compact'),
-                                icon: PhosphorIcons.rocketLaunch(
-                                  PhosphorIconsStyle.regular,
-                                ),
+                                icon: Icons.rocket_launch,
                                 onTap: () => _showSpaceSheet(context),
                               ),
                             ),
@@ -360,9 +349,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: _SoloGameTile(
                                 label: ref.tr('gemstones'),
                                 subtitle: ref.tr('gemstones_subtitle_compact'),
-                                icon: PhosphorIcons.diamond(
-                                  PhosphorIconsStyle.regular,
-                                ),
+                                icon: Icons.diamond,
                                 onTap: () => context.go('/gemstone_game'),
                               ),
                             ),
@@ -371,9 +358,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: _SoloGameTile(
                                 label: 'Olympus',
                                 subtitle: 'Soon',
-                                icon: PhosphorIcons.shield(
-                                  PhosphorIconsStyle.regular,
-                                ),
+                                icon: Icons.shield_outlined,
                               ),
                             ),
                           ],
@@ -433,9 +418,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  PhosphorIcons.trophy(
-                                    PhosphorIconsStyle.regular,
-                                  ),
+                                  Icons.emoji_events,
                                   color: AppTheme.textSecondary,
                                   size: 16,
                                 ),
@@ -658,7 +641,7 @@ class _SoloGameTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Icon(
-            PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+            Icons.arrow_forward,
             color: AppTheme.textTertiary,
             size: 11,
           ),
@@ -719,7 +702,7 @@ class _MultiplayerButton extends StatelessWidget {
                 ),
                 child: Center(
                   child: Icon(
-                    PhosphorIcons.sword(PhosphorIconsStyle.bold),
+                    Icons.sports_martial_arts,
                     color: AppTheme.primary,
                     size: 21,
                   ),
@@ -784,7 +767,7 @@ class _MultiplayerButton extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Icon(
-                PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+                Icons.arrow_forward,
                 color: AppTheme.primary,
                 size: 12,
               ),
@@ -876,7 +859,7 @@ class _ModeSheet extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Center(
               child: Icon(
-                PhosphorIcons.infinity(PhosphorIconsStyle.duotone),
+                Icons.all_inclusive,
                 color: AppTheme.textTertiary,
                 size: 20,
               ),
@@ -1003,7 +986,7 @@ class _ModeCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        PhosphorIcons.shield(PhosphorIconsStyle.fill),
+                        Icons.shield,
                         color: isDoubleVP
                             ? AppTheme.wrong.withOpacity(0.6)
                             : AppTheme.primary.withOpacity(0.4),
@@ -1113,7 +1096,7 @@ class _FlagSheet extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        PhosphorIcons.shield(PhosphorIconsStyle.fill),
+                        Icons.shield,
                         color: AppTheme.primary.withOpacity(0.4),
                         size: 10,
                       ),
