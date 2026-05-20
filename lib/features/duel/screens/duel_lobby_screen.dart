@@ -42,163 +42,182 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight:
+                  MediaQuery.sizeOf(context).height -
+                  MediaQuery.paddingOf(context).vertical,
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
 
-              // ── Back / Leave ──────────────────────────────────────────
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Pressable(
+                // ── Back / Leave ──────────────────────────────────────────
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Pressable(
+                    onTap: () {
+                      ref.read(duelProvider.notifier).leaveRoom();
+                      context.go('/duel');
+                    },
+                    child: Text(
+                      ref.tr('leave'),
+                      style: AppTheme.inter(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 48),
+
+                // ── Room code ─────────────────────────────────────────────
+                Text(
+                  ref.tr('room_code'),
+                  style: AppTheme.inter(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Pressable(
                   onTap: () {
-                    ref.read(duelProvider.notifier).leaveRoom();
-                    context.go('/duel');
+                    Clipboard.setData(
+                      ClipboardData(text: state.roomCode ?? ''),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ref.tr('code_copied'),
+                          style: AppTheme.inter(
+                            color: AppTheme.background,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        backgroundColor: AppTheme.primary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppTheme.inputRadius,
+                        ),
+                      ),
+                    );
                   },
                   child: Text(
-                    ref.tr('leave'),
+                    state.roomCode ?? '...',
                     style: AppTheme.inter(
-                      color: AppTheme.textSecondary,
-                      fontSize: 13,
+                      color: AppTheme.textPrimary,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 4,
                     ),
                   ),
                 ),
-              ),
-
-              const Spacer(),
-
-              // ── Room code ─────────────────────────────────────────────
-              Text(
-                ref.tr('room_code'),
-                style: AppTheme.inter(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Pressable(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: state.roomCode ?? ''));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ref.tr('code_copied'),
-                        style: AppTheme.inter(
-                          color: AppTheme.background,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      backgroundColor: AppTheme.primary,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppTheme.inputRadius,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  state.roomCode ?? '...',
+                const SizedBox(height: 4),
+                Text(
+                  ref.tr('tap_to_copy'),
                   style: AppTheme.inter(
-                    color: AppTheme.textPrimary,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4,
+                    color: AppTheme.textTertiary,
+                    fontSize: 11,
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                ref.tr('tap_to_copy'),
-                style: AppTheme.inter(
-                  color: AppTheme.textTertiary,
-                  fontSize: 11,
-                ),
-              ),
 
-              const SizedBox(height: 48),
+                const SizedBox(height: 48),
 
-              Column(
-                children: duelGameOptions.map((game) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _GameSelectionCard(
-                      gameLabel: ref.tr(game.labelKey),
-                      selectedGameLabel: ref.tr('selected_game'),
-                      availableLabel: game.key == state.selectedGameKey
-                          ? ref.tr('selected')
-                          : ref.tr('available_now'),
-                      hostOnlyLabel: ref.tr('host_only_selection'),
-                      isHost: state.isHost,
-                      selected: game.key == state.selectedGameKey,
-                      icon: _iconForGame(game.key),
-                      onTap: () =>
-                          ref.read(duelProvider.notifier).selectGame(game.key),
-                    ),
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── Players ───────────────────────────────────────────────
-              _PlayerRow(
-                rankIndex: state.me?.rankIndex ?? 0,
-                label: state.me?.name ?? 'You',
-                ready: state.me?.ready ?? false,
-                isMe: true,
-                youLabel: ref.tr('you'),
-              ),
-              const SizedBox(height: 12),
-              state.opponentJoined
-                  ? _PlayerRow(
-                      rankIndex: state.opponent!.rankIndex,
-                      label: state.opponent!.name,
-                      ready: state.opponent!.ready,
-                      youLabel: ref.tr('you'),
-                      isMe: false,
-                    )
-                  : Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: AppTheme.neutralRadius,
-                        border: Border.all(
-                          color: AppTheme.textTertiary,
-                          width: 0.5,
-                        ),
+                Column(
+                  children: duelGameOptions.map((game) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _GameSelectionCard(
+                        gameLabel: ref.tr(game.labelKey),
+                        selectedGameLabel: ref.tr('selected_game'),
+                        availableLabel: game.key == state.selectedGameKey
+                            ? ref.tr('selected')
+                            : ref.tr('available_now'),
+                        hostOnlyLabel: ref.tr('host_only_selection'),
+                        isHost: state.isHost,
+                        selected: game.key == state.selectedGameKey,
+                        icon: _iconForGame(game.key),
+                        onTap: () => ref
+                            .read(duelProvider.notifier)
+                            .selectGame(game.key),
                       ),
-                      child: Text(
-                        ref.tr('waiting_opponent'),
-                        textAlign: TextAlign.center,
-                        style: AppTheme.inter(
-                          color: AppTheme.textTertiary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-
-              const SizedBox(height: 32),
-
-              // ── Ready button ──────────────────────────────────────────
-              if (state.opponentJoined)
-                VoidActionButton(
-                  onTap: () =>
-                      ref.read(duelProvider.notifier).toggleReady(audio),
-                  label: (state.me?.ready ?? false)
-                      ? ref.tr('ready_done')
-                      : ref.tr('ready'),
-                  backgroundColor: (state.me?.ready ?? false)
-                      ? AppTheme.correct
-                      : AppTheme.action,
-                  accentColor: (state.me?.ready ?? false)
-                      ? AppTheme.background
-                      : AppTheme.primaryDeep,
+                    );
+                  }).toList(),
                 ),
 
-              const Spacer(),
-            ],
+                if (state.error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    state.error!,
+                    textAlign: TextAlign.center,
+                    style: AppTheme.inter(color: AppTheme.wrong, fontSize: 12),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // ── Players ───────────────────────────────────────────────
+                _PlayerRow(
+                  rankIndex: state.me?.rankIndex ?? 0,
+                  label: state.me?.name ?? 'You',
+                  ready: state.me?.ready ?? false,
+                  isMe: true,
+                  youLabel: ref.tr('you'),
+                ),
+                const SizedBox(height: 12),
+                state.opponentJoined
+                    ? _PlayerRow(
+                        rankIndex: state.opponent!.rankIndex,
+                        label: state.opponent!.name,
+                        ready: state.opponent!.ready,
+                        youLabel: ref.tr('you'),
+                        isMe: false,
+                      )
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: AppTheme.neutralRadius,
+                          border: Border.all(
+                            color: AppTheme.textTertiary,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          ref.tr('waiting_opponent'),
+                          textAlign: TextAlign.center,
+                          style: AppTheme.inter(
+                            color: AppTheme.textTertiary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+
+                const SizedBox(height: 32),
+
+                // ── Ready button ──────────────────────────────────────────
+                if (state.opponentJoined)
+                  VoidActionButton(
+                    onTap: () =>
+                        ref.read(duelProvider.notifier).toggleReady(audio),
+                    label: (state.me?.ready ?? false)
+                        ? ref.tr('ready_done')
+                        : ref.tr('ready'),
+                    backgroundColor: (state.me?.ready ?? false)
+                        ? AppTheme.correct
+                        : AppTheme.action,
+                    accentColor: (state.me?.ready ?? false)
+                        ? AppTheme.background
+                        : AppTheme.primaryDeep,
+                  ),
+
+                const SizedBox(height: 48),
+              ],
+            ),
           ),
         ),
       ),
@@ -208,6 +227,8 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
 
 IconData _iconForGame(String gameKey) {
   switch (gameKey) {
+    case 'space_orbit':
+      return Icons.swap_vert_rounded;
     case 'space':
       return Icons.rocket_launch;
     case 'gemstones':

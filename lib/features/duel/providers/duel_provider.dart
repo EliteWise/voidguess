@@ -7,9 +7,14 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../../data/repositories/country_repository.dart';
 import '../../../data/models/country.dart';
 import '../../../data/services/hive_service.dart';
+import '../../flag_game/models/flag_round.dart';
 import '../../gemstone_game/models/gemstone.dart';
+import '../../gemstone_game/models/gemstone_round.dart';
+import '../../shared/game_scoring.dart';
 import '../service/duel_service.dart';
 import '../../flag_game/providers/flag_game_provider.dart';
+import '../../space_game/models/space_distance_round.dart';
+import '../../space_game/models/space_orbit_round.dart';
 import '../../space_game/models/space_planet.dart';
 
 // ─── Providers ──────────────────────────────────────────────────────────────
@@ -37,11 +42,20 @@ class DuelGameOption {
 
 const duelGameFlags = DuelGameOption(key: 'flags', labelKey: 'flags');
 const duelGameSpace = DuelGameOption(key: 'space', labelKey: 'space');
+const duelGameSpaceOrbit = DuelGameOption(
+  key: 'space_orbit',
+  labelKey: 'space_orbit_game',
+);
 const duelGameGemstones = DuelGameOption(
   key: 'gemstones',
   labelKey: 'gemstones',
 );
-const duelGameOptions = [duelGameFlags, duelGameSpace, duelGameGemstones];
+const duelGameOptions = [
+  duelGameFlags,
+  duelGameSpace,
+  duelGameSpaceOrbit,
+  duelGameGemstones,
+];
 
 // ─── Player State ───────────────────────────────────────────────────────────
 
@@ -78,17 +92,6 @@ class DuelRoundResult {
   });
 }
 
-class DuelSpaceRound {
-  final SpacePlanet leftPlanet;
-  final SpacePlanet rightPlanet;
-
-  const DuelSpaceRound({required this.leftPlanet, required this.rightPlanet});
-
-  double get actualDistanceMillionKm {
-    return averagePlanetDistanceMillionKm(leftPlanet, rightPlanet);
-  }
-}
-
 // ─── State ──────────────────────────────────────────────────────────────────
 
 class DuelState {
@@ -104,7 +107,8 @@ class DuelState {
   final List<Country> countries; // les 10 pays de la run
   final List<Country> options; // les 6 options du round courant
   final List<int> roundTypes; // 0 = nameToFlag, 1 = flagToName
-  final List<DuelSpaceRound> spaceRounds;
+  final List<SpaceDistanceRound> spaceRounds;
+  final List<SpaceOrbitRound> orbitRounds;
   final double spaceGuessMillionKm;
   final double? submittedSpaceGuessMillionKm;
   final List<Gemstone> gemstonesRun;
@@ -114,6 +118,7 @@ class DuelState {
   final int timeSeconds;
   final bool? isCorrect;
   final int? selectedCountryId;
+  final int? selectedOrbitPlanetId;
   final int? selectedGemstoneId;
   final int countdownValue; // 3, 2, 1
   final bool isRunFinished;
@@ -130,6 +135,7 @@ class DuelState {
     this.options = const [],
     this.roundTypes = const [],
     this.spaceRounds = const [],
+    this.orbitRounds = const [],
     this.spaceGuessMillionKm = 1000,
     this.submittedSpaceGuessMillionKm,
     this.gemstonesRun = const [],
@@ -139,6 +145,7 @@ class DuelState {
     this.timeSeconds = 0,
     this.isCorrect,
     this.selectedCountryId,
+    this.selectedOrbitPlanetId,
     this.selectedGemstoneId,
     this.countdownValue = 3,
     this.isRunFinished = false,
@@ -146,8 +153,10 @@ class DuelState {
 
   Country? get currentCountry =>
       currentRound < countries.length ? countries[currentRound] : null;
-  DuelSpaceRound? get currentSpaceRound =>
+  SpaceDistanceRound? get currentSpaceRound =>
       currentRound < spaceRounds.length ? spaceRounds[currentRound] : null;
+  SpaceOrbitRound? get currentOrbitRound =>
+      currentRound < orbitRounds.length ? orbitRounds[currentRound] : null;
   Gemstone? get currentGemstone =>
       currentRound < gemstonesRun.length ? gemstonesRun[currentRound] : null;
 
@@ -163,9 +172,11 @@ class DuelState {
   bool get opponentJoined => opponent != null;
   bool get bothReady => (me?.ready ?? false) && (opponent?.ready ?? false);
   bool get isSpaceGame => selectedGameKey == duelGameSpace.key;
+  bool get isSpaceOrbitGame => selectedGameKey == duelGameSpaceOrbit.key;
   bool get isGemstoneGame => selectedGameKey == duelGameGemstones.key;
   int get totalRounds {
     if (isSpaceGame) return spaceRounds.length;
+    if (isSpaceOrbitGame) return orbitRounds.length;
     if (isGemstoneGame) return gemstonesRun.length;
     return countries.length;
   }
@@ -187,7 +198,8 @@ class DuelState {
     List<Country>? countries,
     List<Country>? options,
     List<int>? roundTypes,
-    List<DuelSpaceRound>? spaceRounds,
+    List<SpaceDistanceRound>? spaceRounds,
+    List<SpaceOrbitRound>? orbitRounds,
     double? spaceGuessMillionKm,
     double? submittedSpaceGuessMillionKm,
     List<Gemstone>? gemstonesRun,
@@ -197,6 +209,7 @@ class DuelState {
     int? timeSeconds,
     bool? isCorrect,
     int? selectedCountryId,
+    int? selectedOrbitPlanetId,
     int? selectedGemstoneId,
     int? countdownValue,
     bool? isRunFinished,
@@ -213,6 +226,7 @@ class DuelState {
       options: options ?? this.options,
       roundTypes: roundTypes ?? this.roundTypes,
       spaceRounds: spaceRounds ?? this.spaceRounds,
+      orbitRounds: orbitRounds ?? this.orbitRounds,
       spaceGuessMillionKm: spaceGuessMillionKm ?? this.spaceGuessMillionKm,
       submittedSpaceGuessMillionKm:
           submittedSpaceGuessMillionKm ?? this.submittedSpaceGuessMillionKm,
@@ -223,6 +237,8 @@ class DuelState {
       timeSeconds: timeSeconds ?? this.timeSeconds,
       isCorrect: isCorrect ?? this.isCorrect,
       selectedCountryId: selectedCountryId ?? this.selectedCountryId,
+      selectedOrbitPlanetId:
+          selectedOrbitPlanetId ?? this.selectedOrbitPlanetId,
       selectedGemstoneId: selectedGemstoneId ?? this.selectedGemstoneId,
       countdownValue: countdownValue ?? this.countdownValue,
       isRunFinished: isRunFinished ?? this.isRunFinished,
@@ -249,10 +265,11 @@ class DuelNotifier extends StateNotifier<DuelState> {
       allCountries.shuffle();
       final selectedCountries = allCountries.take(10).toList();
       final countryIds = selectedCountries.map((c) => c.id).toList();
-      final roundTypes = List.generate(10, (i) => i % 2); // alternance
-      final spaceRounds = _generateSpaceRounds();
-      final gemstoneRun = _generateGemstoneRun();
-      final gemstoneRoundTypes = List.generate(10, (i) => i % 2);
+      final roundTypes = buildAlternatingFlagRoundTypes();
+      final spaceRounds = generateSpaceDistanceRounds();
+      final orbitRounds = generateSpaceOrbitRounds();
+      final gemstoneRun = generateGemstoneRun();
+      final gemstoneRoundTypes = buildAlternatingGemstoneRoundTypes();
 
       final code = await _service.createRoom(
         playerName: playerName,
@@ -260,14 +277,20 @@ class DuelNotifier extends StateNotifier<DuelState> {
         gameKey: state.selectedGameKey,
         countryIds: countryIds,
         roundTypes: roundTypes,
-        spaceRounds: spaceRounds
-            .map(
-              (round) => {
-                'left': round.leftPlanet.id,
-                'right': round.rightPlanet.id,
-              },
-            )
-            .toList(),
+        spaceRounds: spaceRounds.asMap().entries.map((entry) {
+          final spaceRound = entry.value;
+          final orbitRound = orbitRounds[entry.key];
+          return {
+            'left': spaceRound.leftPlanet.id,
+            'right': spaceRound.rightPlanet.id,
+            'orbit_lower': orbitRound.lowerPlanet.id,
+            'orbit_upper': orbitRound.upperPlanet.id,
+            'orbit_correct': orbitRound.correctPlanet.id,
+            'orbit_options': orbitRound.options
+                .map((planet) => planet.id)
+                .toList(),
+          };
+        }).toList(),
         gemstoneIds: gemstoneRun.map((gemstone) => gemstone.id).toList(),
         gemstoneRoundTypes: gemstoneRoundTypes,
       );
@@ -283,6 +306,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
         countries: selectedCountries,
         roundTypes: roundTypes,
         spaceRounds: spaceRounds,
+        orbitRounds: orbitRounds,
         gemstonesRun: gemstoneRun,
         gemstoneRoundTypes: gemstoneRoundTypes,
       );
@@ -326,34 +350,6 @@ class DuelNotifier extends StateNotifier<DuelState> {
     }
   }
 
-  List<DuelSpaceRound> _generateSpaceRounds() {
-    final rounds = <DuelSpaceRound>[];
-    final randomPlanets = [...spacePlanets];
-
-    while (rounds.length < 10) {
-      randomPlanets.shuffle();
-      final left = randomPlanets[0];
-      final right = randomPlanets[1];
-      final duplicate = rounds.any(
-        (round) =>
-            (round.leftPlanet.id == left.id &&
-                round.rightPlanet.id == right.id) ||
-            (round.leftPlanet.id == right.id &&
-                round.rightPlanet.id == left.id),
-      );
-      if (!duplicate) {
-        rounds.add(DuelSpaceRound(leftPlanet: left, rightPlanet: right));
-      }
-    }
-
-    return rounds;
-  }
-
-  List<Gemstone> _generateGemstoneRun() {
-    final pool = [...gemstones]..shuffle();
-    return pool.take(10).toList();
-  }
-
   // ── Toggle ready ──────────────────────────────────────────────────────
 
   Future<void> toggleReady(AudioPlayer audio) async {
@@ -376,8 +372,37 @@ class DuelNotifier extends StateNotifier<DuelState> {
     if (!state.isHost || state.roomCode == null) return;
     if (!duelGameOptions.any((game) => game.key == gameKey)) return;
 
-    state = state.copyWith(selectedGameKey: gameKey);
-    await _service.setSelectedGame(state.roomCode!, gameKey);
+    final roomCode = state.roomCode!;
+    final previousGameKey = state.selectedGameKey;
+    state = state.copyWith(
+      selectedGameKey: gameKey,
+      me: state.me == null
+          ? null
+          : DuelPlayer(
+              name: state.me!.name,
+              rankIndex: state.me!.rankIndex,
+              ready: false,
+              results: state.me!.results,
+            ),
+      opponent: state.opponent == null
+          ? null
+          : DuelPlayer(
+              name: state.opponent!.name,
+              rankIndex: state.opponent!.rankIndex,
+              ready: false,
+              results: state.opponent!.results,
+            ),
+      error: null,
+    );
+
+    try {
+      await _service.setSelectedGame(roomCode, gameKey);
+    } catch (e) {
+      state = state.copyWith(
+        selectedGameKey: previousGameKey,
+        error: 'Failed to select game',
+      );
+    }
   }
 
   // ── Écouter les changements Firebase ──────────────────────────────────
@@ -434,6 +459,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
             .map((id) => allCountries.firstWhere((c) => c.id == id))
             .toList();
         final spaceRounds = _parseSpaceRounds(data['space_rounds']);
+        final orbitRounds = _parseOrbitRounds(data['space_rounds']);
         final gemstoneIds = List<int>.from(data['gemstone_ids'] ?? []);
         final gemstoneRoundTypes = List<int>.from(
           data['gemstone_round_types'] ?? [],
@@ -445,6 +471,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
           countries: selected,
           roundTypes: roundTypes,
           spaceRounds: spaceRounds,
+          orbitRounds: orbitRounds,
           gemstonesRun: selectedGemstones,
           gemstoneRoundTypes: gemstoneRoundTypes,
         );
@@ -535,18 +562,58 @@ class DuelNotifier extends StateNotifier<DuelState> {
     }).toList();
   }
 
-  List<DuelSpaceRound> _parseSpaceRounds(dynamic roundsRaw) {
+  List<SpaceDistanceRound> _parseSpaceRounds(dynamic roundsRaw) {
     if (roundsRaw == null) return [];
     final list = roundsRaw as List;
     return list.map((roundRaw) {
       final map = roundRaw as Map<String, dynamic>;
       final leftId = map['left'] as int;
       final rightId = map['right'] as int;
-      return DuelSpaceRound(
+      return SpaceDistanceRound(
         leftPlanet: spacePlanets.firstWhere((planet) => planet.id == leftId),
         rightPlanet: spacePlanets.firstWhere((planet) => planet.id == rightId),
       );
     }).toList();
+  }
+
+  List<SpaceOrbitRound> _parseOrbitRounds(dynamic roundsRaw) {
+    if (roundsRaw == null) return [];
+    final list = roundsRaw as List;
+    final parsed = <SpaceOrbitRound>[];
+
+    for (final roundRaw in list) {
+      final map = roundRaw as Map<String, dynamic>;
+      final lowerId = map['orbit_lower'] as int?;
+      final upperId = map['orbit_upper'] as int?;
+      final correctId = map['orbit_correct'] as int?;
+      final optionIdsRaw = map['orbit_options'];
+      if (lowerId == null ||
+          upperId == null ||
+          correctId == null ||
+          optionIdsRaw == null) {
+        continue;
+      }
+
+      final optionIds = List<int>.from(optionIdsRaw as List);
+      parsed.add(
+        SpaceOrbitRound(
+          lowerPlanet: spacePlanets.firstWhere(
+            (planet) => planet.id == lowerId,
+          ),
+          upperPlanet: spacePlanets.firstWhere(
+            (planet) => planet.id == upperId,
+          ),
+          correctPlanet: spacePlanets.firstWhere(
+            (planet) => planet.id == correctId,
+          ),
+          options: optionIds
+              .map((id) => spacePlanets.firstWhere((planet) => planet.id == id))
+              .toList(),
+        ),
+      );
+    }
+
+    return parsed;
   }
 
   // ── Countdown ─────────────────────────────────────────────────────────
@@ -578,6 +645,31 @@ class DuelNotifier extends StateNotifier<DuelState> {
         options: state.options,
         roundTypes: state.roundTypes,
         spaceRounds: state.spaceRounds,
+        orbitRounds: state.orbitRounds,
+        gemstonesRun: state.gemstonesRun,
+        gemstoneOptions: state.gemstoneOptions,
+        gemstoneRoundTypes: state.gemstoneRoundTypes,
+        currentRound: state.currentRound,
+        timeSeconds: 0,
+        countdownValue: state.countdownValue,
+      );
+      return;
+    }
+
+    if (state.isSpaceOrbitGame) {
+      if (state.currentOrbitRound == null) return;
+      state = DuelState(
+        phase: state.phase,
+        role: state.role,
+        roomCode: state.roomCode,
+        me: state.me,
+        opponent: state.opponent,
+        selectedGameKey: state.selectedGameKey,
+        countries: state.countries,
+        options: state.options,
+        roundTypes: state.roundTypes,
+        spaceRounds: state.spaceRounds,
+        orbitRounds: state.orbitRounds,
         gemstonesRun: state.gemstonesRun,
         gemstoneOptions: state.gemstoneOptions,
         gemstoneRoundTypes: state.gemstoneRoundTypes,
@@ -590,13 +682,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
     if (state.isGemstoneGame) {
       if (state.currentGemstone == null) return;
-      final distractors =
-          gemstones
-              .where((item) => item.id != state.currentGemstone!.id)
-              .toList()
-            ..shuffle();
-      final options = [state.currentGemstone!, ...distractors.take(5)]
-        ..shuffle();
+      final options = buildGemstoneOptions(correct: state.currentGemstone!);
       state = DuelState(
         phase: state.phase,
         role: state.role,
@@ -608,6 +694,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
         options: state.options,
         roundTypes: state.roundTypes,
         spaceRounds: state.spaceRounds,
+        orbitRounds: state.orbitRounds,
         gemstonesRun: state.gemstonesRun,
         gemstoneOptions: options,
         gemstoneRoundTypes: state.gemstoneRoundTypes,
@@ -632,6 +719,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
       countries: state.countries,
       roundTypes: state.roundTypes,
       spaceRounds: state.spaceRounds,
+      orbitRounds: state.orbitRounds,
       gemstonesRun: state.gemstonesRun,
       gemstoneRoundTypes: state.gemstoneRoundTypes,
       currentRound: state.currentRound,
@@ -652,6 +740,8 @@ class DuelNotifier extends StateNotifier<DuelState> {
     if (newTime >= maxTime) {
       if (state.isSpaceGame) {
         submitSpaceAnswer();
+      } else if (state.isSpaceOrbitGame) {
+        submitOrbitAnswer(null);
       } else if (state.isGemstoneGame) {
         submitGemstoneAnswer(null);
       } else {
@@ -660,6 +750,48 @@ class DuelNotifier extends StateNotifier<DuelState> {
       return;
     }
     state = state.copyWith(timeSeconds: newTime);
+  }
+
+  Future<void> submitOrbitAnswer(SpacePlanet? selected) async {
+    if (state.phase != DuelPhase.playing) return;
+    if (state.isCorrect != null) return;
+    if (state.currentOrbitRound == null) return;
+
+    final correct =
+        selected != null &&
+        selected.id == state.currentOrbitRound!.correctPlanet.id;
+    final playerId = state.isHost ? 'player_a' : 'player_b';
+    final score = spaceOrbitScoreForAnswer(
+      correct: correct,
+      timeSeconds: state.timeSeconds,
+    );
+
+    await _service.submitRoundResult(
+      code: state.roomCode!,
+      playerId: playerId,
+      roundIndex: state.currentRound,
+      correct: correct,
+      timeSeconds: state.timeSeconds,
+      score: score,
+    );
+
+    final result = DuelRoundResult(
+      correct: correct,
+      timeSeconds: state.timeSeconds,
+      score: score,
+    );
+    final updatedMe = DuelPlayer(
+      name: state.me!.name,
+      rankIndex: state.me!.rankIndex,
+      ready: state.me!.ready,
+      results: [...(state.me?.results ?? []), result],
+    );
+
+    state = state.copyWith(
+      isCorrect: correct,
+      selectedOrbitPlanetId: selected?.id ?? -1,
+      me: updatedMe,
+    );
   }
 
   void updateSpaceGuess(double guessMillionKm) {
@@ -682,14 +814,14 @@ class DuelNotifier extends StateNotifier<DuelState> {
       roundIndex: state.currentRound,
       correct: correct,
       timeSeconds: state.timeSeconds,
-      score: correct ? _calculateFastAnswerScore() : 0,
+      score: correct ? fastAnswerScore(state.timeSeconds) : 0,
     );
 
     // Update local
     final result = DuelRoundResult(
       correct: correct,
       timeSeconds: state.timeSeconds,
-      score: correct ? _calculateFastAnswerScore() : 0,
+      score: correct ? fastAnswerScore(state.timeSeconds) : 0,
     );
     final newResults = <DuelRoundResult>[...(state.me?.results ?? []), result];
     final updatedMe = DuelPlayer(
@@ -714,7 +846,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
     final correct =
         selected != null && selected.id == state.currentGemstone!.id;
     final playerId = state.isHost ? 'player_a' : 'player_b';
-    final score = correct ? _calculateFastAnswerScore() : 0;
+    final score = correct ? fastAnswerScore(state.timeSeconds) : 0;
 
     await _service.submitRoundResult(
       code: state.roomCode!,
@@ -752,7 +884,7 @@ class DuelNotifier extends StateNotifier<DuelState> {
     final guess = state.spaceGuessMillionKm;
     final difference =
         (guess - state.currentSpaceRound!.actualDistanceMillionKm).abs();
-    final score = _calculateSpaceScore(difference);
+    final score = spaceDistanceScore(difference);
     final playerId = state.isHost ? 'player_a' : 'player_b';
 
     await _service.submitRoundResult(
@@ -795,20 +927,6 @@ class DuelNotifier extends StateNotifier<DuelState> {
 
     state = state.copyWith(currentRound: nextIndex);
     await _loadOptions();
-  }
-
-  int _calculateFastAnswerScore() {
-    final time = state.timeSeconds;
-    if (time < 3) return 1000;
-    if (time < 7) return 700;
-    if (time < 15) return 400;
-    return 0;
-  }
-
-  int _calculateSpaceScore(double differenceMillionKm) {
-    const maxGuessMillionKm = 4500.0;
-    final ratio = (differenceMillionKm / maxGuessMillionKm).clamp(0.0, 1.0);
-    return (1000 * (1 - ratio)).round();
   }
 
   // ── Cleanup ───────────────────────────────────────────────────────────

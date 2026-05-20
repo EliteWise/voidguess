@@ -1,9 +1,9 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../core/provider/locale_provider.dart';
+import '../../shared/game_scoring.dart';
 import '../models/gemstone.dart';
+import '../models/gemstone_round.dart';
 
 final gemstoneGameProvider =
     StateNotifierProvider<GemstoneGameNotifier, GemstoneGameState>((ref) {
@@ -98,7 +98,6 @@ class GemstoneGameState {
 
 class GemstoneGameNotifier extends StateNotifier<GemstoneGameState> {
   final Ref _ref;
-  final Random _random = Random();
 
   GemstoneGameNotifier(this._ref) : super(const GemstoneGameState());
 
@@ -108,15 +107,8 @@ class GemstoneGameNotifier extends StateNotifier<GemstoneGameState> {
   }
 
   void _loadNextItem() {
-    final available = gemstones
-        .where((gemstone) => !state.usedGemstoneIds.contains(gemstone.id))
-        .toList();
-    final pool = available.isEmpty ? [...gemstones] : available;
-    final correct = pool[_random.nextInt(pool.length)];
-    final distractors =
-        gemstones.where((gemstone) => gemstone.id != correct.id).toList()
-          ..shuffle(_random);
-    final options = [correct, ...distractors.take(5)]..shuffle(_random);
+    final correct = pickGemstone(excludeIds: state.usedGemstoneIds);
+    final options = buildGemstoneOptions(correct: correct);
 
     state = state.copyWith(
       phase: GemstoneGamePhase.playing,
@@ -151,7 +143,7 @@ class GemstoneGameNotifier extends StateNotifier<GemstoneGameState> {
 
   void _handleAnswer({required bool correct, required int selectedId}) {
     final locale = _ref.read(localeProvider);
-    final score = correct ? _calculateScore() : 0;
+    final score = correct ? fastAnswerScore(state.timeSeconds) : 0;
     final result = GemstoneItemResult(
       gemstoneName: state.correctGemstone!.getName(locale),
       assetPath: state.correctGemstone!.assetPath,
@@ -174,13 +166,5 @@ class GemstoneGameNotifier extends StateNotifier<GemstoneGameState> {
     if (state.isRunFinished) return;
     state = state.copyWith(currentItemIndex: state.currentItemIndex + 1);
     _loadNextItem();
-  }
-
-  int _calculateScore() {
-    final time = state.timeSeconds;
-    if (time < 3) return 1000;
-    if (time < 7) return 700;
-    if (time < 15) return 400;
-    return 0;
   }
 }

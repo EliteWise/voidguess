@@ -8,6 +8,7 @@ import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/theme/app_theme.dart';
 import 'package:voidguess/core/widgets/pressable.dart';
 import 'package:voidguess/core/widgets/void_action_button.dart';
+import 'package:voidguess/features/space_game/models/space_distance_round.dart';
 import 'package:voidguess/features/space_game/models/space_planet.dart';
 import 'package:voidguess/features/space_game/models/space_round_result.dart';
 
@@ -21,14 +22,11 @@ class SpaceGameScreen extends ConsumerStatefulWidget {
 class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   static const int _totalRounds = 10;
   static const int _maxTimeSeconds = 30;
-  static const double _maxGuessMillionKm = 4500;
-  static const double _guessStepMillionKm = 10;
 
   final Random _random = Random();
   final List<SpaceRoundResult> _results = [];
   Timer? _tickTimer;
-  late SpacePlanet _leftPlanet;
-  late SpacePlanet _rightPlanet;
+  late SpaceDistanceRound _round;
   double _guessMillionKm = 1000;
   int _roundIndex = 0;
   int _totalScore = 0;
@@ -43,16 +41,18 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   }
 
   double get _actualDistanceMillionKm {
-    return averagePlanetDistanceMillionKm(_leftPlanet, _rightPlanet);
+    return _round.actualDistanceMillionKm;
   }
 
   double get _differenceMillionKm {
-    return (_guessMillionKm - _actualDistanceMillionKm).abs();
+    return spaceDistanceDifferenceMillionKm(
+      guessMillionKm: _guessMillionKm,
+      actualMillionKm: _actualDistanceMillionKm,
+    );
   }
 
   int get _roundScore {
-    final ratio = (_differenceMillionKm / _maxGuessMillionKm).clamp(0.0, 1.0);
-    return (1000 * (1 - ratio)).round();
+    return spaceDistanceScore(_differenceMillionKm);
   }
 
   bool get _isFinished {
@@ -60,9 +60,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   }
 
   void _pickPair() {
-    final planets = [...spacePlanets]..shuffle(_random);
-    _leftPlanet = planets[0];
-    _rightPlanet = planets[1];
+    _round = generateSpaceDistanceRound(random: _random);
     _guessMillionKm = 1000;
     _timeSeconds = 0;
     _showResult = false;
@@ -87,8 +85,8 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
   void _submit() {
     if (_showResult) return;
     final result = SpaceRoundResult(
-      leftPlanetName: _leftPlanet.name,
-      rightPlanetName: _rightPlanet.name,
+      leftPlanetName: _round.leftPlanet.name,
+      rightPlanetName: _round.rightPlanet.name,
       guessMillionKm: _guessMillionKm,
       actualMillionKm: _actualDistanceMillionKm,
       differenceMillionKm: _differenceMillionKm,
@@ -120,13 +118,6 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
       _pickPair();
     });
     _startTimer();
-  }
-
-  String _formatDistance(double value) {
-    if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1)} Md km';
-    }
-    return '${value.round()} M km';
   }
 
   @override
@@ -166,11 +157,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: Pressable(
               onTap: () => context.go('/'),
-              child: Icon(
-                Icons.close,
-                color: AppTheme.textSecondary,
-                size: 18,
-              ),
+              child: Icon(Icons.close, color: AppTheme.textSecondary, size: 18),
             ),
           ),
         ],
@@ -218,7 +205,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
                         children: [
                           Expanded(
                             child: _PlanetCard(
-                              planet: _leftPlanet,
+                              planet: _round.leftPlanet,
                               height: isCompact ? 136 : 178,
                             ),
                           ),
@@ -231,7 +218,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
                           const SizedBox(width: 14),
                           Expanded(
                             child: _PlanetCard(
-                              planet: _rightPlanet,
+                              planet: _round.rightPlanet,
                               height: isCompact ? 136 : 178,
                             ),
                           ),
@@ -240,7 +227,7 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
                       SizedBox(height: isCompact ? 24 : 44),
                       _DistancePanel(
                         guessLabel: ref.tr('space_estimate'),
-                        value: _formatDistance(_guessMillionKm),
+                        value: formatSpaceDistance(_guessMillionKm),
                         child: SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             trackHeight: 3,
@@ -259,20 +246,22 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
                           ),
                           child: Slider(
                             min: 0,
-                            max: _maxGuessMillionKm,
+                            max: maxSpaceDistanceGuessMillionKm,
                             divisions:
-                                (_maxGuessMillionKm / _guessStepMillionKm)
+                                (maxSpaceDistanceGuessMillionKm /
+                                        spaceDistanceGuessStepMillionKm)
                                     .round(),
                             value: _guessMillionKm,
-                            label: _formatDistance(_guessMillionKm),
+                            label: formatSpaceDistance(_guessMillionKm),
                             onChanged: _showResult
                                 ? null
                                 : (value) {
                                     setState(() {
                                       _guessMillionKm =
-                                          (value / _guessStepMillionKm)
+                                          (value /
+                                                  spaceDistanceGuessStepMillionKm)
                                               .round() *
-                                          _guessStepMillionKm;
+                                          spaceDistanceGuessStepMillionKm;
                                     });
                                   },
                           ),
@@ -286,10 +275,10 @@ class _SpaceGameScreenState extends ConsumerState<SpaceGameScreen> {
                                 key: const ValueKey('result'),
                                 realLabel: ref.tr('space_real_distance'),
                                 differenceLabel: ref.tr('space_difference'),
-                                realDistance: _formatDistance(
+                                realDistance: formatSpaceDistance(
                                   _actualDistanceMillionKm,
                                 ),
-                                difference: _formatDistance(
+                                difference: formatSpaceDistance(
                                   _differenceMillionKm,
                                 ),
                                 score: _roundScore,

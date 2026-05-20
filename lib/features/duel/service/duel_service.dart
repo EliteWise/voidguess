@@ -22,7 +22,7 @@ class DuelService {
     required String gameKey,
     required List<int> countryIds,
     required List<int> roundTypes,
-    required List<Map<String, int>> spaceRounds,
+    required List<Map<String, dynamic>> spaceRounds,
     required List<int> gemstoneIds,
     required List<int> gemstoneRoundTypes,
   }) async {
@@ -108,15 +108,14 @@ class DuelService {
   }
 
   Future<void> setSelectedGame(String code, String gameKey) async {
-    try {
-      await _client
-          .from('matches')
-          .update({'game_key': gameKey})
-          .eq('code', code);
-    } catch (_) {
-      // Older Supabase schemas do not have game_key yet. Flags remains the
-      // default multiplayer game, so room creation and existing duels stay usable.
-    }
+    await _client
+        .from('matches')
+        .update({
+          'game_key': gameKey,
+          'player_a_ready': false,
+          'player_b_ready': false,
+        })
+        .eq('code', code);
   }
 
   Future<void> submitRoundResult({

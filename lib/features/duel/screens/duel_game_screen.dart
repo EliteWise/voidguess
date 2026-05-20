@@ -12,6 +12,8 @@ import '../../../core/widgets/pressable.dart';
 import '../../../data/models/country.dart';
 import '../../flag_game/providers/flag_game_provider.dart';
 import '../../gemstone_game/models/gemstone.dart';
+import '../../space_game/models/space_distance_round.dart';
+import '../../space_game/models/space_orbit_round.dart';
 import '../../space_game/models/space_planet.dart';
 import '../providers/duel_provider.dart';
 
@@ -66,6 +68,12 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
   Future<void> _onSpaceSubmitted() async {
     _tickTimer?.cancel();
     await ref.read(duelProvider.notifier).submitSpaceAnswer();
+    _onFeedback();
+  }
+
+  Future<void> _onOrbitSelected(SpacePlanet planet) async {
+    _tickTimer?.cancel();
+    await ref.read(duelProvider.notifier).submitOrbitAnswer(planet);
     _onFeedback();
   }
 
@@ -132,6 +140,8 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
 
     final isLoading = state.isSpaceGame
         ? state.currentSpaceRound == null
+        : state.isSpaceOrbitGame
+        ? state.currentOrbitRound == null
         : state.isGemstoneGame
         ? state.currentGemstone == null || state.gemstoneOptions.isEmpty
         : state.currentCountry == null || state.options.isEmpty;
@@ -222,6 +232,15 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
                   differenceLabel: ref.tr('space_difference'),
                   submitLabel: ref.tr('space_validate'),
                 )
+              else if (state.isSpaceOrbitGame)
+                _DuelOrbitRoundView(
+                  round: state.currentOrbitRound!,
+                  selectedPlanetId: state.selectedOrbitPlanetId,
+                  answered: state.isCorrect != null,
+                  onAnswerSelected: _onOrbitSelected,
+                  promptLabel: ref.tr('space_orbit_prompt'),
+                  correctLabel: ref.tr('correct'),
+                )
               else if (state.isGemstoneGame)
                 _DuelGemstoneRoundView(
                   gemstone: state.currentGemstone!,
@@ -308,18 +327,8 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
   }
 }
 
-String _formatDistance(double value) {
-  if (value >= 1000) {
-    return '${(value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1)} Md km';
-  }
-  return '${value.round()} M km';
-}
-
 class _DuelSpaceRoundView extends StatelessWidget {
-  static const double _maxGuessMillionKm = 4500;
-  static const double _guessStepMillionKm = 10;
-
-  final DuelSpaceRound round;
+  final SpaceDistanceRound round;
   final double guessMillionKm;
   final double? submittedGuessMillionKm;
   final int timeSeconds;
@@ -352,8 +361,7 @@ class _DuelSpaceRoundView extends StatelessWidget {
   }
 
   int get _score {
-    final ratio = (_differenceMillionKm / _maxGuessMillionKm).clamp(0.0, 1.0);
-    return (1000 * (1 - ratio)).round();
+    return spaceDistanceScore(_differenceMillionKm);
   }
 
   @override
@@ -372,19 +380,22 @@ class _DuelSpaceRoundView extends StatelessWidget {
         const SizedBox(height: 34),
         _DuelDistancePanel(
           label: estimateLabel,
-          value: _formatDistance(guessMillionKm),
+          value: formatSpaceDistance(guessMillionKm),
           child: Slider(
             min: 0,
-            max: _maxGuessMillionKm,
-            divisions: (_maxGuessMillionKm / _guessStepMillionKm).round(),
+            max: maxSpaceDistanceGuessMillionKm,
+            divisions:
+                (maxSpaceDistanceGuessMillionKm /
+                        spaceDistanceGuessStepMillionKm)
+                    .round(),
             value: guessMillionKm,
-            label: _formatDistance(guessMillionKm),
+            label: formatSpaceDistance(guessMillionKm),
             onChanged: answered
                 ? null
                 : (value) {
                     onGuessChanged(
-                      (value / _guessStepMillionKm).round() *
-                          _guessStepMillionKm,
+                      (value / spaceDistanceGuessStepMillionKm).round() *
+                          spaceDistanceGuessStepMillionKm,
                     );
                   },
           ),
@@ -397,8 +408,10 @@ class _DuelSpaceRoundView extends StatelessWidget {
                   key: const ValueKey('space-result'),
                   realLabel: realLabel,
                   differenceLabel: differenceLabel,
-                  realDistance: _formatDistance(round.actualDistanceMillionKm),
-                  difference: _formatDistance(_differenceMillionKm),
+                  realDistance: formatSpaceDistance(
+                    round.actualDistanceMillionKm,
+                  ),
+                  difference: formatSpaceDistance(_differenceMillionKm),
                   score: _score,
                 )
               : const SizedBox(key: ValueKey('space-empty'), height: 88),
@@ -426,6 +439,274 @@ class _DuelSpaceRoundView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DuelOrbitRoundView extends StatelessWidget {
+  final SpaceOrbitRound round;
+  final int? selectedPlanetId;
+  final bool answered;
+  final ValueChanged<SpacePlanet> onAnswerSelected;
+  final String promptLabel;
+  final String correctLabel;
+
+  const _DuelOrbitRoundView({
+    required this.round,
+    required this.selectedPlanetId,
+    required this.answered,
+    required this.onAnswerSelected,
+    required this.promptLabel,
+    required this.correctLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPlanet = selectedPlanetId == null || selectedPlanetId == -1
+        ? null
+        : round.options.firstWhere(
+            (planet) => planet.id == selectedPlanetId,
+            orElse: () => round.correctPlanet,
+          );
+
+    return Column(
+      children: [
+        Text(
+          promptLabel,
+          textAlign: TextAlign.center,
+          style: AppTheme.inter(
+            color: AppTheme.textSecondary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Row(
+          children: [
+            Expanded(child: _DuelPlanetCard(planet: round.lowerPlanet)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _DuelOrbitCenterCard(
+                planet: selectedPlanet,
+                correctPlanet: round.correctPlanet,
+                answered: answered,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: _DuelPlanetCard(planet: round.upperPlanet)),
+          ],
+        ),
+        const SizedBox(height: 34),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 2.25,
+          physics: const NeverScrollableScrollPhysics(),
+          children: round.options.map((planet) {
+            return _DuelOrbitOption(
+              planet: planet,
+              correctPlanet: round.correctPlanet,
+              isSelected: planet.id == selectedPlanetId,
+              answered: answered,
+              onTap: answered ? null : () => onAnswerSelected(planet),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 18),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: answered
+              ? _DuelOrbitFeedback(
+                  key: const ValueKey('orbit-feedback'),
+                  correct: selectedPlanet?.id == round.correctPlanet.id,
+                  correctPlanet: round.correctPlanet,
+                  correctLabel: correctLabel,
+                )
+              : const SizedBox(key: ValueKey('orbit-empty'), height: 54),
+        ),
+      ],
+    );
+  }
+}
+
+class _DuelOrbitCenterCard extends StatelessWidget {
+  final SpacePlanet? planet;
+  final SpacePlanet correctPlanet;
+  final bool answered;
+
+  const _DuelOrbitCenterCard({
+    required this.planet,
+    required this.correctPlanet,
+    required this.answered,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCorrect = planet?.id == correctPlanet.id;
+    final borderColor = !answered
+        ? AppTheme.primary.withValues(alpha: 0.55)
+        : isCorrect
+        ? AppTheme.correct
+        : AppTheme.wrong;
+
+    return Container(
+      height: 150,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceHigh,
+        borderRadius: AppTheme.cardRadius,
+        border: Border.all(color: borderColor, width: answered ? 1.2 : 0.8),
+      ),
+      child: planet == null
+          ? Icon(Icons.swap_vert_rounded, color: AppTheme.primary, size: 28)
+          : Column(
+              children: [
+                Expanded(
+                  child: Image.asset(
+                    planet!.assetPath,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  planet!.name.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.inter(
+                    color: AppTheme.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _DuelOrbitOption extends StatelessWidget {
+  final SpacePlanet planet;
+  final SpacePlanet correctPlanet;
+  final bool isSelected;
+  final bool answered;
+  final VoidCallback? onTap;
+
+  const _DuelOrbitOption({
+    required this.planet,
+    required this.correctPlanet,
+    required this.isSelected,
+    required this.answered,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCorrect = planet.id == correctPlanet.id;
+    final showCorrect = answered && isCorrect;
+    final showWrong = answered && isSelected && !isCorrect;
+
+    return Pressable(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: showCorrect
+              ? AppTheme.correct.withValues(alpha: 0.10)
+              : showWrong
+              ? AppTheme.wrong.withValues(alpha: 0.10)
+              : AppTheme.surface,
+          borderRadius: AppTheme.neutralRadius,
+          border: Border.all(
+            color: showCorrect
+                ? AppTheme.correct
+                : showWrong
+                ? AppTheme.wrong
+                : AppTheme.textTertiary,
+            width: (showCorrect || showWrong) ? 2 : 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 42,
+              height: 42,
+              child: Image.asset(planet.assetPath, fit: BoxFit.contain),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                planet.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.inter(
+                  color: showCorrect
+                      ? AppTheme.correct
+                      : showWrong
+                      ? AppTheme.wrong
+                      : AppTheme.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DuelOrbitFeedback extends StatelessWidget {
+  final bool correct;
+  final SpacePlanet correctPlanet;
+  final String correctLabel;
+
+  const _DuelOrbitFeedback({
+    super.key,
+    required this.correct,
+    required this.correctPlanet,
+    required this.correctLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = correct ? AppTheme.correct : AppTheme.wrong;
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: AppTheme.neutralRadius,
+        border: Border.all(color: color.withValues(alpha: 0.6), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            correct ? Icons.check_rounded : Icons.close_rounded,
+            color: color,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              correct ? correctLabel : '$correctLabel : ${correctPlanet.name}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.inter(
+                color: AppTheme.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

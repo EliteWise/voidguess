@@ -49,9 +49,9 @@ class AppStrings {
     'mode_subtitle_compact': {'fr': 'Rapide · Complet', 'en': 'Quick · Full'},
     'solo_ranked_compact': {'fr': 'Classé', 'en': 'Ranked'},
     'space': {'fr': 'Espace', 'en': 'Space'},
-    'gemstones': {'fr': 'Gemmes', 'en': 'Gemstones'},
+    'gemstones': {'fr': 'Pierres précieuses', 'en': 'Gemstones'},
     'gemstones_subtitle_compact': {
-      'fr': 'Pierres précieuses',
+      'fr': 'Cristaux & minéraux',
       'en': 'Precious stones',
     },
     'coming_soon': {'fr': 'Bientôt', 'en': 'Soon'},
@@ -63,7 +63,7 @@ class AppStrings {
       'fr': 'Distances moyennes',
       'en': 'Average distances',
     },
-    'space_orbit_game': {'fr': 'Ordre orbital', 'en': 'Orbital order'},
+    'space_orbit_game': {'fr': 'Ordre planétaire', 'en': 'Planetary order'},
     'space_orbit_game_subtitle': {
       'fr': 'Glisser la planète entre deux orbites',
       'en': 'Drag the planet between two orbits',
@@ -81,7 +81,7 @@ class AppStrings {
       'en': 'Drag a planet into the center zone',
     },
     'space_drop_here': {'fr': 'Déposer ici', 'en': 'Drop here'},
-    'space_orbit_title': {'fr': 'Ordre orbital', 'en': 'Orbital order'},
+    'space_orbit_title': {'fr': 'Ordre planétaire', 'en': 'Planetary order'},
     'space_estimate': {'fr': 'Estimation', 'en': 'Estimate'},
     'space_real_distance': {'fr': 'Distance réelle', 'en': 'Real distance'},
     'space_difference': {'fr': 'Écart', 'en': 'Difference'},
@@ -231,7 +231,7 @@ class AppStrings {
     'cat_guess': {'fr': 'Titres', 'en': 'Titles'},
     'cat_flags': {'fr': 'Drapeaux', 'en': 'Flags'},
     'cat_space': {'fr': 'Espace', 'en': 'Space'},
-    'cat_gemstones': {'fr': 'Gemmes', 'en': 'Gemstones'},
+    'cat_gemstones': {'fr': 'Pierres précieuses', 'en': 'Gemstones'},
     'cat_secret': {'fr': 'Secret', 'en': 'Secret'},
   };
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../../core/provider/locale_provider.dart';
 import '../../../data/models/country.dart';
 import '../../../data/repositories/country_repository.dart';
+import '../../shared/game_scoring.dart';
 
 // ─── Providers ──────────────────────────────────────────────────────────────
 
@@ -10,10 +11,12 @@ final countryRepositoryProvider = Provider<CountryRepository>((ref) {
   return CountryRepository();
 });
 
-final flagGameProvider = StateNotifierProvider<FlagGameNotifier, FlagGameState>((ref) {
-  final repository = ref.watch(countryRepositoryProvider);
-  return FlagGameNotifier(repository, ref);
-});
+final flagGameProvider = StateNotifierProvider<FlagGameNotifier, FlagGameState>(
+  (ref) {
+    final repository = ref.watch(countryRepositoryProvider);
+    return FlagGameNotifier(repository, ref);
+  },
+);
 
 enum FlagRoundType { nameToFlag, flagToName }
 
@@ -45,7 +48,7 @@ class FlagGameState {
   final List<Country> options;
   final int currentItemIndex;
   final List<FlagItemResult> results;
-  final bool? isCorrect;       // null = pas encore répondu
+  final bool? isCorrect; // null = pas encore répondu
   final int timeSeconds;
   final List<int> usedCountryIds;
   final bool isLoading;
@@ -75,7 +78,9 @@ class FlagGameState {
   // Nombre de bonnes réponses
   int get correctCount => results.where((r) => r.correct).length;
 
-  FlagRoundType get roundType => currentItemIndex % 2 == 0 ? FlagRoundType.nameToFlag : FlagRoundType.flagToName;
+  FlagRoundType get roundType => currentItemIndex % 2 == 0
+      ? FlagRoundType.nameToFlag
+      : FlagRoundType.flagToName;
 
   FlagGameState copyWith({
     FlagGamePhase? phase,
@@ -174,7 +179,7 @@ class FlagGameNotifier extends StateNotifier<FlagGameState> {
   }
 
   void _handleAnswer({required bool correct, required int selectedId}) {
-    final score = correct ? _calculateScore() : 0;
+    final score = correct ? fastAnswerScore(state.timeSeconds) : 0;
 
     final locale = _ref.read(localeProvider);
 
@@ -201,19 +206,7 @@ class FlagGameNotifier extends StateNotifier<FlagGameState> {
   // Appelé après le feedback (0.5s) pour passer à l'item suivant
   Future<void> nextItem() async {
     if (state.isRunFinished) return;
-    state = state.copyWith(
-      currentItemIndex: state.currentItemIndex + 1,
-    );
+    state = state.copyWith(currentItemIndex: state.currentItemIndex + 1);
     await _loadNextItem();
   }
-
-  // Score basé sur la rapidité
-  int _calculateScore() {
-    final t = state.timeSeconds;
-    if (t < 3) return 1000;
-    if (t < 7) return 700;
-    if (t < 15) return 400;
-    return 0;
-  }
 }
-

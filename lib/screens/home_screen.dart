@@ -259,9 +259,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       width: 0.5,
                                     ),
                                   ),
-                                  child: Icon(
-                                    Icons.music_note,
-                                  ),
+                                  child: Icon(Icons.music_note),
                                 ),
                               ),
                             ),
@@ -296,6 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                         const Spacer(),
+                        const SizedBox(height: 8),
                         const UpdateBanner(),
                         const _AnimatedTitle(),
                         const SizedBox(height: 32),
@@ -583,8 +582,10 @@ class _SoloGameTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final estimatedTileWidth = (MediaQuery.sizeOf(context).width - 60) / 2;
+    final isNarrow = estimatedTileWidth < 180;
     final content = Container(
-      height: 90,
+      height: isNarrow ? 104 : 90,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -617,13 +618,13 @@ class _SoloGameTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  maxLines: 1,
+                  maxLines: isNarrow ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTheme.inter(
                     color: AppTheme.textPrimary,
-                    fontSize: 15,
+                    fontSize: isNarrow ? 14 : 15,
                     fontWeight: FontWeight.w700,
-                  ),
+                  ).copyWith(height: isNarrow ? 1.08 : null),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -640,11 +641,7 @@ class _SoloGameTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(
-            Icons.arrow_forward,
-            color: AppTheme.textTertiary,
-            size: 11,
-          ),
+          Icon(Icons.arrow_forward, color: AppTheme.textTertiary, size: 11),
         ],
       ),
     );
@@ -701,11 +698,7 @@ class _MultiplayerButton extends StatelessWidget {
                   ),
                 ),
                 child: Center(
-                  child: Icon(
-                    Icons.sports_martial_arts,
-                    color: AppTheme.primary,
-                    size: 21,
-                  ),
+                  child: Icon(Icons.groups, color: AppTheme.primary, size: 21),
                 ),
               ),
               const SizedBox(width: 16),
@@ -766,11 +759,7 @@ class _MultiplayerButton extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Icon(
-                Icons.arrow_forward,
-                color: AppTheme.primary,
-                size: 12,
-              ),
+              Icon(Icons.arrow_forward, color: AppTheme.primary, size: 12),
             ],
           ),
         ),

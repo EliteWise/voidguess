@@ -9,6 +9,7 @@ import 'package:voidguess/core/theme/app_theme.dart';
 import 'package:voidguess/core/widgets/pressable.dart';
 import 'package:voidguess/core/widgets/result_stat.dart';
 import 'package:voidguess/core/widgets/void_action_button.dart';
+import 'package:voidguess/features/space_game/models/space_orbit_round.dart';
 import 'package:voidguess/features/space_game/models/space_planet.dart';
 
 class SpaceOrbitGameScreen extends ConsumerStatefulWidget {
@@ -24,9 +25,9 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
   static const int _maxTimeSeconds = 15;
 
   final Random _random = Random();
-  final List<_OrbitRoundResult> _results = [];
+  final List<SpaceOrbitRoundResult> _results = [];
   Timer? _tickTimer;
-  late _OrbitRound _round;
+  late SpaceOrbitRound _round;
   int _roundIndex = 0;
   int _timeSeconds = 0;
   int _totalScore = 0;
@@ -36,7 +37,7 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
   @override
   void initState() {
     super.initState();
-    _round = _generateRound();
+    _round = generateSpaceOrbitRound(random: _random);
     _startTimer();
   }
 
@@ -57,58 +58,21 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
     });
   }
 
-  _OrbitRound _generateRound() {
-    final ordered = [...spacePlanets]
-      ..sort((a, b) => a.orbitMillionKm.compareTo(b.orbitMillionKm));
-    final correctIndex = 1 + _random.nextInt(ordered.length - 2);
-    final lower = ordered[correctIndex - 1];
-    final upper = ordered[correctIndex + 1];
-    final correct = ordered[correctIndex];
-    final distractors =
-        ordered
-            .where(
-              (planet) =>
-                  planet.id != lower.id &&
-                  planet.id != upper.id &&
-                  planet.id != correct.id &&
-                  !_isBetween(planet, lower, upper),
-            )
-            .toList()
-          ..shuffle(_random);
-    final options = [correct, ...distractors.take(3)]..shuffle(_random);
-
-    return _OrbitRound(
-      lower: lower,
-      upper: upper,
-      correct: correct,
-      options: options,
-    );
-  }
-
-  bool _isBetween(SpacePlanet planet, SpacePlanet lower, SpacePlanet upper) {
-    return planet.orbitMillionKm > lower.orbitMillionKm &&
-        planet.orbitMillionKm < upper.orbitMillionKm;
-  }
-
-  int _scoreForAnswer(bool correct) {
-    if (!correct) return 0;
-    if (_timeSeconds < 3) return 1000;
-    if (_timeSeconds < 7) return 700;
-    return 400;
-  }
-
   void _submit(SpacePlanet? planet) {
     if (_isCorrect != null) return;
-    final correct = planet?.id == _round.correct.id;
-    final score = _scoreForAnswer(correct);
+    final correct = planet?.id == _round.correctPlanet.id;
+    final score = spaceOrbitScoreForAnswer(
+      correct: correct,
+      timeSeconds: _timeSeconds,
+    );
 
     setState(() {
       _selectedPlanet = planet;
       _isCorrect = correct;
       _totalScore += score;
       _results.add(
-        _OrbitRoundResult(
-          correctPlanet: _round.correct,
+        SpaceOrbitRoundResult(
+          correctPlanet: _round.correctPlanet,
           selectedPlanet: planet,
           correct: correct,
           timeSeconds: _timeSeconds,
@@ -128,7 +92,7 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
 
     setState(() {
       _roundIndex += 1;
-      _round = _generateRound();
+      _round = generateSpaceOrbitRound(random: _random);
       _timeSeconds = 0;
       _selectedPlanet = null;
       _isCorrect = null;
@@ -215,7 +179,9 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
                     SizedBox(height: isCompact ? 18 : 26),
                     Row(
                       children: [
-                        Expanded(child: _OrbitPlanetCard(planet: _round.lower)),
+                        Expanded(
+                          child: _OrbitPlanetCard(planet: _round.lowerPlanet),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _OrbitDropZone(
@@ -227,7 +193,9 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: _OrbitPlanetCard(planet: _round.upper)),
+                        Expanded(
+                          child: _OrbitPlanetCard(planet: _round.upperPlanet),
+                        ),
                       ],
                     ),
                     SizedBox(height: isCompact ? 24 : 36),
@@ -252,7 +220,7 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
                     if (answered) ...[
                       _OrbitFeedback(
                         correct: _isCorrect ?? false,
-                        correctPlanet: _round.correct,
+                        correctPlanet: _round.correctPlanet,
                         score: _results.last.score,
                       ),
                       const SizedBox(height: 16),
@@ -287,36 +255,6 @@ class _SpaceOrbitGameScreenState extends ConsumerState<SpaceOrbitGameScreen> {
       ),
     );
   }
-}
-
-class _OrbitRound {
-  final SpacePlanet lower;
-  final SpacePlanet upper;
-  final SpacePlanet correct;
-  final List<SpacePlanet> options;
-
-  const _OrbitRound({
-    required this.lower,
-    required this.upper,
-    required this.correct,
-    required this.options,
-  });
-}
-
-class _OrbitRoundResult {
-  final SpacePlanet correctPlanet;
-  final SpacePlanet? selectedPlanet;
-  final bool correct;
-  final int timeSeconds;
-  final int score;
-
-  const _OrbitRoundResult({
-    required this.correctPlanet,
-    required this.selectedPlanet,
-    required this.correct,
-    required this.timeSeconds,
-    required this.score,
-  });
 }
 
 class _OrbitPlanetCard extends StatelessWidget {
@@ -363,7 +301,7 @@ class _OrbitPlanetCard extends StatelessWidget {
 }
 
 class _OrbitDropZone extends ConsumerWidget {
-  final _OrbitRound round;
+  final SpaceOrbitRound round;
   final SpacePlanet? selectedPlanet;
   final bool answered;
   final bool? isCorrect;
@@ -594,7 +532,7 @@ class _SpaceOrbitSummary extends ConsumerWidget {
   final int totalScore;
   final int correctCount;
   final int totalRounds;
-  final List<_OrbitRoundResult> results;
+  final List<SpaceOrbitRoundResult> results;
 
   const _SpaceOrbitSummary({
     required this.totalScore,
