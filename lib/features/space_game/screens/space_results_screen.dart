@@ -99,7 +99,7 @@ class _SpaceResultsScreenState extends ConsumerState<SpaceResultsScreen> {
 
   Color get _runColor {
     final ratio = widget.totalScore / (widget.totalItems * 1000);
-    if (ratio >= 0.9) return AppTheme.correct;
+    if (ratio >= 0.9) return AppTheme.resultPositive;
     if (ratio >= 0.75) return AppTheme.primary;
     if (ratio >= 0.5) return AppTheme.hint;
     return AppTheme.wrong;
@@ -174,7 +174,7 @@ class _SpaceResultsScreenState extends ConsumerState<SpaceResultsScreen> {
           final index = entry.key;
           final result = entry.value;
           final color = result.score >= 850
-              ? AppTheme.correct
+              ? AppTheme.resultPositive
               : result.score >= 550
               ? AppTheme.hint
               : AppTheme.wrong;
@@ -183,15 +183,24 @@ class _SpaceResultsScreenState extends ConsumerState<SpaceResultsScreen> {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: AppTheme.neutralRadius,
-              border: Border.all(
-                color: color.withValues(alpha: 0.5),
-                width: 0.5,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.textTertiary.withValues(alpha: 0.55),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Row(
               children: [
+                Container(
+                  width: 3,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: AppTheme.inputRadius,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 SizedBox(
                   width: 20,
                   child: Text(

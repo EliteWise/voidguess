@@ -12,6 +12,7 @@ class VoidActionButton extends StatelessWidget {
   final double fontSize;
   final FontWeight fontWeight;
   final double letterSpacing;
+  final IconData? icon;
 
   const VoidActionButton({
     super.key,
@@ -24,13 +25,16 @@ class VoidActionButton extends StatelessWidget {
     this.fontSize = 14,
     this.fontWeight = FontWeight.w700,
     this.letterSpacing = 0,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Pressable(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
         width: double.infinity,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
@@ -54,14 +58,44 @@ class VoidActionButton extends StatelessWidget {
             ),
             Padding(
               padding: padding,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AppTheme.inter(
-                  color: foregroundColor,
-                  fontSize: fontSize,
-                  fontWeight: fontWeight,
-                  letterSpacing: letterSpacing,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.96, end: 1).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        ),
+                      ),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Row(
+                  key: ValueKey('$label-$icon'),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, color: foregroundColor, size: fontSize + 3),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: AppTheme.inter(
+                        color: foregroundColor,
+                        fontSize: fontSize,
+                        fontWeight: fontWeight,
+                        letterSpacing: letterSpacing,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

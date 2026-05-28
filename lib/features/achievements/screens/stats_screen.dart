@@ -26,10 +26,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppTheme.textSecondary,
-          ),
+          icon: Icon(Icons.arrow_back, color: AppTheme.textSecondary),
           onPressed: () => context.go('/'),
         ),
         title: Text(
@@ -182,9 +179,6 @@ class _StatsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hive = HiveService();
     final totalRuns = hive.getTotalRuns();
-    final successRate = hive.getSuccessRate();
-    final bestScore = hive.getBestScore();
-    final bestAvgTime = hive.getBestAvgTime();
     final bestRuns = _buildBestRuns(ref, hive);
 
     return SingleChildScrollView(
@@ -645,20 +639,14 @@ class _InlineMetric extends StatelessWidget {
 class _GlobalCard extends StatelessWidget {
   final String label;
   final String value;
-  final String? unit;
 
-  const _GlobalCard({required this.label, required this.value, this.unit});
+  const _GlobalCard({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.center,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: AppTheme.neutralRadius,
-        border: Border.all(color: AppTheme.textTertiary, width: 0.5),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -671,16 +659,6 @@ class _GlobalCard extends StatelessWidget {
               letterSpacing: -0.5,
             ),
           ),
-          if (unit != null) ...[
-            const SizedBox(width: 3),
-            Text(
-              unit!,
-              style: AppTheme.inter(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ],
           const SizedBox(height: 4),
           Text(
             label,
@@ -835,9 +813,7 @@ class _AchievementsTabState extends ConsumerState<_AchievementsTab> {
                           borderRadius: AppTheme.inputRadius,
                         ),
                         child: Icon(
-                          isUnlocked
-                              ? Icons.emoji_events
-                              : Icons.lock_outline,
+                          isUnlocked ? Icons.emoji_events : Icons.lock_outline,
                           color: isUnlocked
                               ? AppTheme.primary
                               : AppTheme.textSecondary,

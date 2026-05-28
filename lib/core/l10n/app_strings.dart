@@ -157,12 +157,12 @@ class AppStrings {
     'tap_to_copy': {'fr': 'Appuyer pour copier', 'en': 'Tap to copy'},
     'code_copied': {'fr': 'Code copié !', 'en': 'Code copied!'},
     'waiting_opponent': {
-      'fr': 'En attente d\'un adversaire...',
-      'en': 'Waiting for opponent...',
+      'fr': 'En attente de joueurs...',
+      'en': 'Waiting for players...',
     },
     'waiting_finish': {
-      'fr': 'En attente de l\'adversaire...',
-      'en': 'Waiting for opponent to finish...',
+      'fr': 'En attente des autres joueurs...',
+      'en': 'Waiting for other players...',
     },
     'ready': {'fr': 'Prêt', 'en': 'Ready'},
     'ready_done': {'fr': 'Prêt !', 'en': 'Ready!'},
@@ -172,7 +172,7 @@ class AppStrings {
     'you_win': {'fr': 'Victoire !', 'en': 'You win!'},
     'you_lose': {'fr': 'Défaite !', 'en': 'You lose!'},
     'draw': {'fr': 'Égalité !', 'en': 'Draw!'},
-    'duel_flags': {'fr': '1v1 Drapeaux', 'en': '1v1 Flags'},
+    'duel_flags': {'fr': 'Multi Drapeaux', 'en': 'Multiplayer Flags'},
     'room_not_found': {
       'fr': 'Room introuvable ou pleine',
       'en': 'Room not found or full',
@@ -200,6 +200,39 @@ class AppStrings {
     },
     'enter_name': {'fr': 'Entre ton pseudo', 'en': 'Enter your name'},
     'continue_btn': {'fr': 'Continuer', 'en': 'Continue'},
+
+    // Settings
+    'settings': {'fr': 'Options', 'en': 'Settings'},
+    'profile': {'fr': 'Profil', 'en': 'Profile'},
+    'preferences': {'fr': 'Préférences', 'en': 'Preferences'},
+    'data': {'fr': 'Données', 'en': 'Data'},
+    'about': {'fr': 'À propos', 'en': 'About'},
+    'save': {'fr': 'Enregistrer', 'en': 'Save'},
+    'saved': {'fr': 'Enregistré', 'en': 'Saved'},
+    'name_saved': {'fr': 'Pseudo enregistré', 'en': 'Name saved'},
+    'name_required': {
+      'fr': 'Entre un pseudo pour continuer',
+      'en': 'Enter a name to continue',
+    },
+    'sound': {'fr': 'Son', 'en': 'Sound'},
+    'delete_data': {'fr': 'Supprimer mes données', 'en': 'Delete my data'},
+    'delete_data_short': {
+      'fr': 'Stats, rang, succès et pseudo',
+      'en': 'Stats, rank, achievements and name',
+    },
+    'delete_data_title': {
+      'fr': 'Supprimer tes données ?',
+      'en': 'Delete your data?',
+    },
+    'delete_data_desc': {
+      'fr':
+          'Toutes tes stats, ton rang, tes succès, ton pseudo et tes préférences seront supprimés. Cette action est irréversible.',
+      'en':
+          'All stats, rank, achievements, name and preferences will be deleted. This cannot be undone.',
+    },
+    'delete_data_confirm': {'fr': 'Supprimer', 'en': 'Delete'},
+    'data_deleted': {'fr': 'Données supprimées', 'en': 'Data deleted'},
+    'version': {'fr': 'Version', 'en': 'Version'},
 
     // Stats screen
     'stats_label': {'fr': 'Stats', 'en': 'Stats'},

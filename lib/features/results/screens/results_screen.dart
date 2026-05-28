@@ -152,7 +152,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
 
   Color get _runColor {
     if (widget.isHardcoreFail) return AppTheme.wrong;
-    if (widget.itemsFound == widget.totalItems) return AppTheme.correct;
+    if (widget.itemsFound == widget.totalItems) return AppTheme.resultPositive;
     if (widget.itemsFound >= widget.totalItems * 0.7) return AppTheme.primary;
     if (widget.itemsFound >= widget.totalItems * 0.4) return AppTheme.hint;
     return AppTheme.wrong;
@@ -246,17 +246,26 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: AppTheme.neutralRadius,
-              border: Border.all(
-                color: result.found
-                    ? AppTheme.correct.withOpacity(0.3)
-                    : AppTheme.wrong.withOpacity(0.3),
-                width: 0.5,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.textTertiary.withValues(alpha: 0.55),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Row(
               children: [
+                Container(
+                  width: 3,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: result.found
+                        ? AppTheme.resultPositive
+                        : AppTheme.wrong,
+                    borderRadius: AppTheme.inputRadius,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 SizedBox(
                   width: 20,
                   child: Text(
@@ -292,7 +301,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                   result.found ? '+${result.score}' : '—',
                   style: AppTheme.inter(
                     color: result.found
-                        ? AppTheme.correct
+                        ? AppTheme.resultPositive
                         : AppTheme.textTertiary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -317,13 +326,8 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
 
         Pressable(
           onTap: _share,
-          child: Container(
+          child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: AppTheme.chipRadius,
-              border: Border.all(color: AppTheme.textTertiary, width: 0.5),
-            ),
             child: Text(
               ref.tr('share_result'),
               textAlign: TextAlign.center,

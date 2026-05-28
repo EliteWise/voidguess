@@ -31,4 +31,20 @@ void main() {
       expect(answeredState.totalScore, greaterThan(0));
     },
   );
+  
+  test('gemstone timeout automatically end the game after 15s', () async {
+    final container = ProviderContainer.test();
+
+    final notifier = container.read(gemstoneGameProvider.notifier);
+
+    await notifier.startRun();
+
+    for (var i = 0; i < 15; i++) {
+      notifier.tick();
+    }
+
+    final state = container.read(gemstoneGameProvider);
+
+    expect(state.phase, GemstoneGamePhase.feedback);
+  });
 }

@@ -565,10 +565,31 @@ class HiveService {
 
   // Player Infos
   String getPlayerName() {
-    return Hive.box('stats').get('playerName', defaultValue: '') as String;
+    return Hive.box(_statsBox).get('playerName', defaultValue: '') as String;
   }
 
   Future<void> setPlayerName(String name) async {
-    await Hive.box('stats').put('playerName', name);
+    await Hive.box(_statsBox).put('playerName', name);
+  }
+
+  String getLocale() {
+    return Hive.box(_statsBox).get('locale', defaultValue: 'fr') as String;
+  }
+
+  Future<void> setLocale(String locale) async {
+    await Hive.box(_statsBox).put('locale', locale);
+  }
+
+  bool isSoundEnabled() {
+    return Hive.box(_statsBox).get('soundEnabled', defaultValue: false) as bool;
+  }
+
+  Future<void> setSoundEnabled(bool enabled) async {
+    await Hive.box(_statsBox).put('soundEnabled', enabled);
+  }
+
+  Future<void> deleteAllUserData() async {
+    await Hive.box(_statsBox).clear();
+    await Hive.box(_achievementsBox).clear();
   }
 }

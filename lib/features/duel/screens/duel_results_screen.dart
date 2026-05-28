@@ -16,9 +16,9 @@ class DuelResultsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(duelProvider);
     final me = state.me;
-    final opp = state.opponent;
+    final players = state.players;
 
-    if (me == null || opp == null) {
+    if (me == null || players.length < 2) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(
@@ -29,17 +29,31 @@ class DuelResultsScreen extends ConsumerWidget {
       );
     }
 
-    final meCorrect = me.correctCount;
-    final oppCorrect = opp.correctCount;
     final compareByScore = state.isSpaceGame;
+    final rankedPlayers = [...players]
+      ..sort((a, b) {
+        if (compareByScore) {
+          final scoreCompare = b.totalScore.compareTo(a.totalScore);
+          if (scoreCompare != 0) return scoreCompare;
+        } else {
+          final correctCompare = b.correctCount.compareTo(a.correctCount);
+          if (correctCompare != 0) return correctCompare;
+        }
+        return a.avgTime.compareTo(b.avgTime);
+      });
+    final best = rankedPlayers.first;
     final iWon = compareByScore
-        ? me.totalScore > opp.totalScore ||
-              (me.totalScore == opp.totalScore && me.avgTime < opp.avgTime)
-        : meCorrect > oppCorrect ||
-              (meCorrect == oppCorrect && me.avgTime < opp.avgTime);
-    final isDraw = compareByScore
-        ? me.totalScore == opp.totalScore && me.avgTime == opp.avgTime
-        : meCorrect == oppCorrect && me.avgTime == opp.avgTime;
+        ? me.totalScore == best.totalScore && me.avgTime == best.avgTime
+        : me.correctCount == best.correctCount && me.avgTime == best.avgTime;
+    final tiedWinners = rankedPlayers.where((player) {
+      if (compareByScore) {
+        return player.totalScore == best.totalScore &&
+            player.avgTime == best.avgTime;
+      }
+      return player.correctCount == best.correctCount &&
+          player.avgTime == best.avgTime;
+    }).length;
+    final isDraw = tiedWinners > 1 && iWon;
 
     String resultLabel;
     Color resultColor;
@@ -86,7 +100,7 @@ class DuelResultsScreen extends ConsumerWidget {
 
               const SizedBox(height: 40),
 
-              // ── Comparatif ────────────────────────────────────────────
+              // ── Classement ────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -95,80 +109,22 @@ class DuelResultsScreen extends ConsumerWidget {
                   border: Border.all(color: AppTheme.textTertiary, width: 0.5),
                 ),
                 child: Column(
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        const SizedBox(width: 80),
-                        Expanded(
-                          child: Text(
-                            me.name,
-                            style: AppTheme.inter(
-                              color: AppTheme.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            opp.name,
-                            style: AppTheme.inter(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(height: 0.5, color: AppTheme.textTertiary),
-                    const SizedBox(height: 16),
-
-                    if (compareByScore) ...[
-                      _CompareRow(
-                        label: ref.tr('score'),
-                        myValue: '${me.totalScore}',
-                        oppValue: '${opp.totalScore}',
-                        myWins: me.totalScore > opp.totalScore,
-                        oppWins: opp.totalScore > me.totalScore,
+                  children: rankedPlayers.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final player = entry.value;
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == rankedPlayers.length - 1 ? 0 : 12,
                       ),
-                      const SizedBox(height: 12),
-                    ] else ...[
-                      _CompareRow(
-                        label: ref.tr('correct'),
-                        myValue: '$meCorrect / ${state.totalRounds}',
-                        oppValue: '$oppCorrect / ${state.totalRounds}',
-                        myWins: meCorrect > oppCorrect,
-                        oppWins: oppCorrect > meCorrect,
+                      child: _PlayerResultRow(
+                        position: index + 1,
+                        player: player,
+                        isMe: player.id == state.playerId,
+                        compareByScore: compareByScore,
+                        totalRounds: state.totalRounds,
                       ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // Avg time
-                    _CompareRow(
-                      label: ref.tr('avg_time'),
-                      myValue: '${me.avgTime.toStringAsFixed(1)}s',
-                      oppValue: '${opp.avgTime.toStringAsFixed(1)}s',
-                      myWins: me.avgTime < opp.avgTime,
-                      oppWins: opp.avgTime < me.avgTime,
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (!compareByScore)
-                      _CompareRow(
-                        label: ref.tr('accuracy'),
-                        myValue:
-                            '${((meCorrect / state.totalRounds) * 100).round()}%',
-                        oppValue:
-                            '${((oppCorrect / state.totalRounds) * 100).round()}%',
-                        myWins: meCorrect > oppCorrect,
-                        oppWins: oppCorrect > meCorrect,
-                      ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               ),
 
@@ -211,55 +167,67 @@ class DuelResultsScreen extends ConsumerWidget {
   }
 }
 
-// ─── Compare row ────────────────────────────────────────────────────────────
+// ─── Result row ─────────────────────────────────────────────────────────────
 
-class _CompareRow extends StatelessWidget {
-  final String label;
-  final String myValue;
-  final String oppValue;
-  final bool myWins;
-  final bool oppWins;
+class _PlayerResultRow extends StatelessWidget {
+  final int position;
+  final DuelPlayer player;
+  final bool isMe;
+  final bool compareByScore;
+  final int totalRounds;
 
-  const _CompareRow({
-    required this.label,
-    required this.myValue,
-    required this.oppValue,
-    required this.myWins,
-    required this.oppWins,
+  const _PlayerResultRow({
+    required this.position,
+    required this.player,
+    required this.isMe,
+    required this.compareByScore,
+    required this.totalRounds,
   });
 
   @override
   Widget build(BuildContext context) {
+    final primaryValue = compareByScore
+        ? '${player.totalScore}'
+        : '${player.correctCount} / $totalRounds';
+
     return Row(
       children: [
         SizedBox(
-          width: 80,
+          width: 28,
           child: Text(
-            label,
-            style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 12),
+            '#$position',
+            style: AppTheme.inter(
+              color: isMe ? AppTheme.primary : AppTheme.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
+        const SizedBox(width: 10),
         Expanded(
           child: Text(
-            myValue,
+            player.name,
             style: AppTheme.inter(
-              color: myWins ? AppTheme.correct : AppTheme.textPrimary,
-              fontSize: 16,
+              color: isMe ? AppTheme.primary : AppTheme.textPrimary,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
-            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        Expanded(
-          child: Text(
-            oppValue,
-            style: AppTheme.inter(
-              color: oppWins ? AppTheme.correct : AppTheme.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
+        const SizedBox(width: 12),
+        Text(
+          primaryValue,
+          style: AppTheme.inter(
+            color: AppTheme.textPrimary,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
           ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '${player.avgTime.toStringAsFixed(1)}s',
+          style: AppTheme.inter(color: AppTheme.textSecondary, fontSize: 12),
         ),
       ],
     );

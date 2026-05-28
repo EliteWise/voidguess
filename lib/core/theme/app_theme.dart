@@ -11,6 +11,7 @@ class AppTheme {
   static const Color primary = Color(0xFFE8E8F0);
   static const Color primaryDeep = Color(0xFF4040FF);
   static const Color primaryDim = Color(0xFF2A2A3A);
+  static const Color resultPositive = Color(0xFF7B61FF);
   static const Color action = Color(0xFF111118);
   static const Color actionText = Color(0xFFE8E8F0);
 

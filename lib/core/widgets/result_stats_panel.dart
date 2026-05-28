@@ -24,13 +24,8 @@ class ResultStatsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: AppTheme.neutralRadius,
-        border: Border.all(color: AppTheme.textTertiary, width: 0.5),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -42,7 +37,11 @@ class ResultStatsPanel extends StatelessWidget {
               color: stats[index].color,
             ),
             if (index != stats.length - 1)
-              Container(width: 0.5, height: 40, color: AppTheme.textTertiary),
+              Container(
+                width: 0.5,
+                height: 36,
+                color: AppTheme.textTertiary.withValues(alpha: 0.65),
+              ),
           ],
         ],
       ),

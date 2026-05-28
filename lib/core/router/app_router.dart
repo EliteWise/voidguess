@@ -17,6 +17,7 @@ import '../../features/space_game/screens/space_results_screen.dart';
 import '../../features/space_game/models/space_round_result.dart';
 import '../../features/game/providers/game_provider.dart';
 import '../../screens/home_screen.dart';
+import '../../screens/settings_screen.dart';
 import '../../features/game/screens/game_screen.dart';
 import '../../features/results/screens/results_screen.dart';
 
@@ -24,6 +25,10 @@ final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
+    ),
     GoRoute(
       path: '/game',
       builder: (context, state) {

@@ -95,7 +95,7 @@ class _GemstoneResultsScreenState extends ConsumerState<GemstoneResultsScreen> {
     final ratio = widget.totalItems == 0
         ? 0
         : widget.correctCount / widget.totalItems;
-    if (ratio == 1.0) return AppTheme.correct;
+    if (ratio == 1.0) return AppTheme.resultPositive;
     if (ratio >= 0.8) return AppTheme.primary;
     if (ratio >= 0.5) return AppTheme.hint;
     return AppTheme.wrong;
@@ -166,17 +166,26 @@ class _GemstoneResultsScreenState extends ConsumerState<GemstoneResultsScreen> {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: AppTheme.neutralRadius,
-              border: Border.all(
-                color: result.correct
-                    ? AppTheme.correct.withValues(alpha: 0.5)
-                    : AppTheme.wrong.withValues(alpha: 0.5),
-                width: 0.5,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.textTertiary.withValues(alpha: 0.55),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Row(
               children: [
+                Container(
+                  width: 3,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: result.correct
+                        ? AppTheme.resultPositive
+                        : AppTheme.wrong,
+                    borderRadius: AppTheme.inputRadius,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 SizedBox(
                   width: 20,
                   child: Text(
@@ -220,7 +229,7 @@ class _GemstoneResultsScreenState extends ConsumerState<GemstoneResultsScreen> {
                   result.correct ? '+${result.score}' : '-',
                   style: AppTheme.inter(
                     color: result.correct
-                        ? AppTheme.correct
+                        ? AppTheme.resultPositive
                         : AppTheme.textTertiary,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

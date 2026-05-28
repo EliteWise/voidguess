@@ -11,6 +11,7 @@ import 'package:voidguess/core/widgets/void_action_button.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/pressable.dart';
 import '../providers/duel_provider.dart';
+import '../service/duel_service.dart';
 
 class DuelLobbyScreen extends ConsumerStatefulWidget {
   const DuelLobbyScreen({super.key});
@@ -160,42 +161,48 @@ class _DuelLobbyScreenState extends ConsumerState<DuelLobbyScreen> {
                 const SizedBox(height: 24),
 
                 // ── Players ───────────────────────────────────────────────
-                _PlayerRow(
-                  rankIndex: state.me?.rankIndex ?? 0,
-                  label: state.me?.name ?? 'You',
-                  ready: state.me?.ready ?? false,
-                  isMe: true,
-                  youLabel: ref.tr('you'),
+                Text(
+                  '${state.players.length} / $maxDuelPlayers',
+                  style: AppTheme.inter(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                state.opponentJoined
-                    ? _PlayerRow(
-                        rankIndex: state.opponent!.rankIndex,
-                        label: state.opponent!.name,
-                        ready: state.opponent!.ready,
-                        youLabel: ref.tr('you'),
-                        isMe: false,
-                      )
-                    : Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: AppTheme.neutralRadius,
-                          border: Border.all(
-                            color: AppTheme.textTertiary,
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          ref.tr('waiting_opponent'),
-                          textAlign: TextAlign.center,
-                          style: AppTheme.inter(
-                            color: AppTheme.textTertiary,
-                            fontSize: 13,
-                          ),
-                        ),
+                ...state.players.map((player) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _PlayerRow(
+                      rankIndex: player.rankIndex,
+                      label: player.name,
+                      ready: player.ready,
+                      youLabel: ref.tr('you'),
+                      isMe: player.id == state.playerId,
+                    ),
+                  );
+                }),
+                if (!state.roomIsFull)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: AppTheme.neutralRadius,
+                      border: Border.all(
+                        color: AppTheme.textTertiary,
+                        width: 0.5,
                       ),
+                    ),
+                    child: Text(
+                      ref.tr('waiting_opponent'),
+                      textAlign: TextAlign.center,
+                      style: AppTheme.inter(
+                        color: AppTheme.textTertiary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 32),
 

@@ -136,7 +136,7 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
 
   Color get _runColor {
     final ratio = widget.correctCount / widget.totalItems;
-    if (ratio == 1.0) return AppTheme.correct;
+    if (ratio == 1.0) return AppTheme.resultPositive;
     if (ratio >= 0.8) return AppTheme.primary;
     if (ratio >= 0.5) return AppTheme.hint;
     return AppTheme.wrong;
@@ -232,18 +232,26 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: AppTheme.neutralRadius,
-              border: Border.all(
-                color: result.correct
-                    ? AppTheme.correct.withValues(alpha: 0.5)
-                    : AppTheme.wrong.withValues(alpha: 0.5),
-                width: 0.5,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.textTertiary.withValues(alpha: 0.55),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Row(
               children: [
-                // Numéro
+                Container(
+                  width: 3,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: result.correct
+                        ? AppTheme.resultPositive
+                        : AppTheme.wrong,
+                    borderRadius: AppTheme.inputRadius,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 SizedBox(
                   width: 20,
                   child: Text(
@@ -256,7 +264,6 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                 ),
                 const SizedBox(width: 8),
 
-                // Drapeau
                 ClipRRect(
                   borderRadius: AppTheme.inputRadius,
                   child: SizedBox(
@@ -267,7 +274,6 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                 ),
                 const SizedBox(width: 10),
 
-                // Nom du pays
                 Expanded(
                   child: Text(
                     result.countryName,
@@ -281,7 +287,6 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
                   ),
                 ),
 
-                // Temps
                 Text(
                   '${result.timeSeconds}s',
                   style: AppTheme.inter(
@@ -307,13 +312,8 @@ class _FlagResultsScreenState extends ConsumerState<FlagResultsScreen> {
 
         Pressable(
           onTap: _share,
-          child: Container(
+          child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: AppTheme.chipRadius,
-              border: Border.all(color: AppTheme.textTertiary, width: 0.5),
-            ),
             child: Text(
               ref.tr('share_result'),
               textAlign: TextAlign.center,

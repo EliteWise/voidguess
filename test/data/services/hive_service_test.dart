@@ -28,6 +28,33 @@ void main() {
       final after = hiveService.getVPInCurrentRank();
       expect(after, greaterThan(before));
     });
+
+    test(
+      'flag ranked updates promote at 10 VP and clamp losses at Void',
+      () async {
+        await Hive.box('stats').put('currentVP', 9);
+        await Hive.box('stats').put('rankIndex', 0);
+
+        final gained = await hiveService.updateFlagRank(
+          correctCount: 10,
+          totalItems: 10,
+        );
+
+        expect(gained, 1);
+        expect(hiveService.getCurrentVP(), 10);
+        expect(hiveService.getCurrentRankName(), 'Bronze');
+
+        await hiveService.resetRank();
+        final lost = await hiveService.updateFlagRank(
+          correctCount: 0,
+          totalItems: 10,
+        );
+
+        expect(lost, -1);
+        expect(hiveService.getCurrentVP(), 0);
+        expect(hiveService.getCurrentRankName(), 'Void');
+      },
+    );
   });
 
   group('run counters', () {

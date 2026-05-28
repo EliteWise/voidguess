@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:voidguess/core/widgets/floating_letters.dart';
 import 'core/provider/locale_provider.dart';
+import 'core/provider/sound_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'data/services/hive_service.dart';
@@ -17,11 +17,14 @@ void main() async {
   );
 
   await HiveService().init();
-  final savedLocale = Hive.box('stats').get('locale', defaultValue: 'fr');
+  final hive = HiveService();
+  final savedLocale = hive.getLocale();
+  final savedSoundEnabled = hive.isSoundEnabled();
   runApp(
     ProviderScope(
       overrides: [
         localeProvider.overrideWith((ref) => savedLocale),
+        soundProvider.overrideWith((ref) => savedSoundEnabled),
       ],
       child: const MyApp(),
     ),
@@ -49,7 +52,7 @@ class MyApp extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: child!,
                 ),
-              )
+              ),
             ],
           ),
         );

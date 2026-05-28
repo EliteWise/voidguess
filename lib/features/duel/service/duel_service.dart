@@ -3,6 +3,8 @@
 import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+const int maxDuelPlayers = 4;
+
 class DuelService {
   final _client = Supabase.instance.client;
 
@@ -17,6 +19,7 @@ class DuelService {
   }
 
   Future<String> createRoom({
+    required String playerId,
     required String playerName,
     required int playerRankIndex,
     required String gameKey,
@@ -37,6 +40,7 @@ class DuelService {
 
     if (existing != null) {
       return createRoom(
+        playerId: playerId,
         playerName: playerName,
         playerRankIndex: playerRankIndex,
         gameKey: gameKey,
@@ -57,6 +61,16 @@ class DuelService {
       'space_rounds': spaceRounds,
       'gemstone_ids': gemstoneIds,
       'gemstone_round_types': gemstoneRoundTypes,
+      'host_player_id': playerId,
+      'players': [
+        _buildPlayerPayload(
+          id: playerId,
+          name: playerName,
+          rankIndex: playerRankIndex,
+        ),
+      ],
+      // Legacy columns kept populated so existing nullable/NOT NULL schema
+      // constraints do not block the new multi-player payload.
       'player_a_name': playerName,
       'player_a_rank_index': playerRankIndex,
       'player_a_ready': false,
@@ -67,31 +81,34 @@ class DuelService {
     return code;
   }
 
-  Future<bool> joinRoom({
+  Map<String, dynamic> _buildPlayerPayload({
+    required String id,
+    required String name,
+    required int rankIndex,
+  }) {
+    return {
+      'id': id,
+      'name': name,
+      'rankIndex': rankIndex,
+      'ready': false,
+      'results': [],
+    };
+  }
+
+  Future<String?> joinRoom({
     required String code,
     required String playerName,
     required int playerRankIndex,
   }) async {
-    final match = await _client
-        .from('matches')
-        .select()
-        .eq('code', code)
-        .eq('status', 'waiting')
-        .maybeSingle();
-
-    if (match == null) return false;
-    if (match['player_b_name'] != null) return false;
-
-    await _client
-        .from('matches')
-        .update({
-          'player_b_name': playerName,
-          'player_b_rank_index': playerRankIndex,
-          'player_b_ready': false,
-        })
-        .eq('code', code);
-
-    return true;
+    final playerId = await _client.rpc<String?>(
+      'join_match',
+      params: {
+        'p_code': code,
+        'p_player_name': playerName,
+        'p_rank_index': playerRankIndex,
+      },
+    );
+    return playerId;
   }
 
   Future<void> setReady({
@@ -99,8 +116,10 @@ class DuelService {
     required String playerId,
     required bool ready,
   }) async {
-    final column = playerId == 'player_a' ? 'player_a_ready' : 'player_b_ready';
-    await _client.from('matches').update({column: ready}).eq('code', code);
+    await _client.rpc<void>(
+      'set_player_ready',
+      params: {'p_code': code, 'p_player_id': playerId, 'p_ready': ready},
+    );
   }
 
   Future<void> setStatus(String code, String status) async {
@@ -108,14 +127,10 @@ class DuelService {
   }
 
   Future<void> setSelectedGame(String code, String gameKey) async {
-    await _client
-        .from('matches')
-        .update({
-          'game_key': gameKey,
-          'player_a_ready': false,
-          'player_b_ready': false,
-        })
-        .eq('code', code);
+    await _client.rpc<void>(
+      'set_match_game',
+      params: {'p_code': code, 'p_game_key': gameKey},
+    );
   }
 
   Future<void> submitRoundResult({
@@ -127,19 +142,8 @@ class DuelService {
     int score = 0,
     double? differenceMillionKm,
   }) async {
-    final column = playerId == 'player_a'
-        ? 'player_a_results'
-        : 'player_b_results';
-
-    // Récupère les résultats actuels
-    final match = await _client
-        .from('matches')
-        .select(column)
-        .eq('code', code)
-        .single();
-
-    final currentResults = List<Map<String, dynamic>>.from(match[column] ?? []);
     final result = <String, dynamic>{
+      'roundIndex': roundIndex,
       'correct': correct,
       'timeSeconds': timeSeconds,
       'score': score,
@@ -147,12 +151,16 @@ class DuelService {
     if (differenceMillionKm != null) {
       result['differenceMillionKm'] = differenceMillionKm;
     }
-    currentResults.add(result);
 
-    await _client
-        .from('matches')
-        .update({column: currentResults})
-        .eq('code', code);
+    await _client.rpc<void>(
+      'submit_player_result',
+      params: {
+        'p_code': code,
+        'p_player_id': playerId,
+        'p_round_index': roundIndex,
+        'p_result': result,
+      },
+    );
   }
 
   Future<Map<String, dynamic>?> getRoom(String code) async {

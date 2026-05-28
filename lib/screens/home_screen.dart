@@ -2,10 +2,10 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:voidguess/core/l10n/app_strings.dart';
 import 'package:voidguess/core/l10n/l10n.dart';
 import 'package:voidguess/core/provider/locale_provider.dart';
+import 'package:voidguess/core/provider/sound_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/pressable.dart';
 import '../core/widgets/rank_emblem.dart';
@@ -24,6 +24,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _rankIndex = 0;
   int _vpInRank = 0;
+  bool _isPlaying = false;
 
   final audio = AudioPlayer();
 
@@ -31,7 +32,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _loadRank();
-    _backgroundSong();
+    _syncBackgroundSong(ref.read(soundProvider));
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkPlayerName());
   }
 
@@ -41,11 +42,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
-  void _backgroundSong() async {
-    await audio.setSource(AssetSource('audio/home_page.wav'));
-    await audio.setVolume(1.0);
-    await audio.setReleaseMode(ReleaseMode.loop);
-    await audio.resume();
+  Future<void> _syncBackgroundSong(bool soundEnabled) async {
+    if (!soundEnabled) {
+      await audio.stop();
+      _isPlaying = false;
+      return;
+    }
+
+    if (!_isPlaying) {
+      await audio.setSource(AssetSource('audio/home_page.wav'));
+      await audio.setVolume(1.0);
+      await audio.setReleaseMode(ReleaseMode.loop);
+      await audio.resume();
+      _isPlaying = true;
+    }
   }
 
   void _checkPlayerName() {
@@ -184,14 +194,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Color(0xFFFF1744),
   ];
 
-  void _toggleLocale(lang) {
-    final newLocale = lang == 'fr' ? 'en' : 'fr';
+  Future<void> _toggleLocale(String locale) async {
+    final newLocale = locale == 'fr' ? 'en' : 'fr';
     ref.read(localeProvider.notifier).state = newLocale;
-    Hive.box('stats').put('locale', newLocale);
-  }
-
-  void _stopSong() {
-    audio.stop();
+    await HiveService().setLocale(newLocale);
   }
 
   void _showFlagSheet(BuildContext context) {
@@ -218,6 +224,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(soundProvider, (_, next) => _syncBackgroundSong(next));
+
     final rankName = HiveService.rankNames[_rankIndex];
     final rankColor = _rankColors[_rankIndex];
     final isVoidMaster = _rankIndex >= HiveService.rankNames.length - 1;
@@ -228,219 +236,199 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Pressable(
-                                onTap: () => _stopSong(),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.surface,
-                                    borderRadius: AppTheme.inputRadius,
-                                    border: Border.all(
-                                      color: AppTheme.textTertiary,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  child: Icon(Icons.music_note),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Pressable(
-                                onTap: () => _toggleLocale(locale),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.surface,
-                                    borderRadius: AppTheme.inputRadius,
-                                    border: Border.all(
-                                      color: AppTheme.textTertiary,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    locale.toUpperCase(),
-                                    style: AppTheme.inter(
-                                      color: AppTheme.textSecondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+            final content = ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Pressable(
+                            onTap: () => _toggleLocale(locale),
+                            child: SizedBox(
+                              width: 44,
+                              height: 36,
+                              child: Center(
+                                child: Text(
+                                  locale.toUpperCase(),
+                                  style: AppTheme.inter(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                        const Spacer(),
-                        const SizedBox(height: 8),
-                        const UpdateBanner(),
-                        const _AnimatedTitle(),
-                        const SizedBox(height: 32),
-                        Row(
+                          ),
+                          Pressable(
+                            onTap: () {
+                              context.push('/settings').then((_) {
+                                if (!mounted) return;
+                                _loadRank();
+                                _checkPlayerName();
+                              });
+                            },
+                            child: const SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: Icon(
+                                Icons.settings,
+                                color: AppTheme.textSecondary,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      const SizedBox(height: 8),
+                      const UpdateBanner(),
+                      const _AnimatedTitle(),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SoloGameTile(
+                              label: ref.tr('video_games'),
+                              subtitle: ref.tr('mode_subtitle_compact'),
+                              icon: Icons.sports_esports,
+                              onTap: () => _showModeSheet(context, 'game'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SoloGameTile(
+                              label: ref.tr('movies'),
+                              subtitle: ref.tr('mode_subtitle_compact'),
+                              icon: Icons.movie,
+                              onTap: () => _showModeSheet(context, 'movie'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SoloGameTile(
+                              label: ref.tr('flags'),
+                              subtitle: ref.tr('solo_ranked_compact'),
+                              icon: Icons.flag,
+                              onTap: () => _showFlagSheet(context),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SoloGameTile(
+                              label: ref.tr('space'),
+                              subtitle: ref.tr('space_subtitle_compact'),
+                              icon: Icons.rocket_launch,
+                              onTap: () => _showSpaceSheet(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SoloGameTile(
+                              label: ref.tr('gemstones'),
+                              subtitle: ref.tr('gemstones_subtitle_compact'),
+                              icon: Icons.diamond,
+                              onTap: () => context.go('/gemstone_game'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SoloGameTile(
+                              label: 'Olympus',
+                              subtitle: 'Soon',
+                              icon: Icons.shield_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      _MultiplayerButton(
+                        label: ref.tr('multiplayer'),
+                        subtitle: ref.tr('multiplayer_subtitle'),
+                        onTap: () => context.go('/duel'),
+                      ),
+                      const Spacer(),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: _SoloGameTile(
-                                label: ref.tr('video_games'),
-                                subtitle: ref.tr('mode_subtitle_compact'),
-                                icon: Icons.sports_esports,
-                                onTap: () => _showModeSheet(context, 'game'),
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: RankEmblem(
+                                rankIndex: _rankIndex,
+                                size: 24,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _SoloGameTile(
-                                label: ref.tr('movies'),
-                                subtitle: ref.tr('mode_subtitle_compact'),
-                                icon: Icons.movie,
-                                onTap: () => _showModeSheet(context, 'movie'),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SoloGameTile(
-                                label: ref.tr('flags'),
-                                subtitle: ref.tr('solo_ranked_compact'),
-                                icon: Icons.flag,
-                                onTap: () => _showFlagSheet(context),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _SoloGameTile(
-                                label: ref.tr('space'),
-                                subtitle: ref.tr('space_subtitle_compact'),
-                                icon: Icons.rocket_launch,
-                                onTap: () => _showSpaceSheet(context),
+                            const SizedBox(width: 6),
+                            Text(
+                              isVoidMaster
+                                  ? '$rankName  $_vpInRank VP'
+                                  : '$rankName  $_vpInRank / 10 VP',
+                              style: AppTheme.inter(
+                                color: rankColor,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SoloGameTile(
-                                label: ref.tr('gemstones'),
-                                subtitle: ref.tr('gemstones_subtitle_compact'),
-                                icon: Icons.diamond,
-                                onTap: () => context.go('/gemstone_game'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _SoloGameTile(
-                                label: 'Olympus',
-                                subtitle: 'Soon',
-                                icon: Icons.shield_outlined,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        _MultiplayerButton(
-                          label: ref.tr('multiplayer'),
-                          subtitle: ref.tr('multiplayer_subtitle'),
-                          onTap: () => context.go('/duel'),
-                        ),
-                        const Spacer(),
-                        const SizedBox(height: 14),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
+                      ),
+                      Pressable(
+                        onTap: () => context.go('/stats'),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 20,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: RankEmblem(
-                                  rankIndex: _rankIndex,
-                                  size: 24,
-                                ),
+                              Icon(
+                                Icons.emoji_events,
+                                color: AppTheme.textSecondary,
+                                size: 16,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 10),
                               Text(
-                                isVoidMaster
-                                    ? '$rankName  $_vpInRank VP'
-                                    : '$rankName  $_vpInRank / 10 VP',
+                                ref.tr('stats_achievements'),
                                 style: AppTheme.inter(
-                                  color: rankColor,
+                                  color: AppTheme.textSecondary,
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        Pressable(
-                          onTap: () => context.go('/stats'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 20,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: AppTheme.neutralRadius,
-                              border: Border.all(
-                                color: AppTheme.textTertiary,
-                                width: 0.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.emoji_events,
-                                  color: AppTheme.textSecondary,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  ref.tr('stats_achievements'),
-                                  style: AppTheme.inter(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
                 ),
               ),
             );
+
+            if (constraints.maxHeight >= 740) return content;
+
+            return SingleChildScrollView(child: content);
           },
         ),
       ),
